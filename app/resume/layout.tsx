@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Resume | Eric Martins',
+  title: 'Resume',
   description:
-    'Professional resume of Eric Martins, Front End and API Developer',
+    'Professional resume of Eric Martins, Front-End and API Developer with experience in React, Angular and APIs.',
 }
 
 export default function ResumeLayout({
