@@ -1,7 +1,7 @@
 import Link from "next/link"
-import type { ProjectItem } from "@/data/projects"
+import type { Project } from "@/data/projects"
 
-export default function ProjectCard({ project }: { project: ProjectItem }) {
+export default function ProjectCard({ project }: { project: Project }) {
   const stack = project.stack?.length ? project.stack : [project.technology]
 
   return (
