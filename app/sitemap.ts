@@ -1,8 +1,18 @@
 import type { MetadataRoute } from "next"
 import { projects } from "@/data/projects"
 
+function getBaseUrl() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  if (siteUrl) return siteUrl.replace(/\/$/, "")
+
+  const vercelUrl = process.env.VERCEL_URL
+  if (vercelUrl) return `https://${vercelUrl}`
+
+  return "http://localhost:3000"
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  const baseUrl = getBaseUrl()
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/`, changeFrequency: "monthly", priority: 1 },
