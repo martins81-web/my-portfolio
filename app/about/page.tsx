@@ -2,64 +2,17 @@ import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from "next"
 import { projects } from "../../data/projects"
+import {
+  aboutProfile,
+  aboutProof,
+  aboutTimeline,
+  aboutSkills,
+} from "../../data/about"
 
 export const metadata: Metadata = {
   title: "About",
   description: "About Eric Martins, Front End and API Developer.",
 }
-
-const profile = {
-  name: "Eric Martins",
-  headline: "Front End and API Developer",
-  location: "Québec, Canada",
-  email: "ericmartins81@gmail.com",
-  summary:
-    "I build clean UI and reliable integrations with TypeScript, modern frameworks, and APIs. I focus on performance, accessibility, and maintainable code.",
-}
-
-const timeline = [
-  {
-    period: "2025",
-    title: "Front End Developer",
-    org: "Add company",
-    bullets: [
-      "Add one measurable achievement",
-      "Add one measurable achievement",
-      "Add one measurable achievement",
-    ],
-  },
-  {
-    period: "2024",
-    title: "Front End and API Developer",
-    org: "Add company",
-    bullets: ["Add one measurable achievement", "Add one measurable achievement"],
-  },
-  {
-    period: "2023",
-    title: "Web Developer",
-    org: "Add company",
-    bullets: ["Add one measurable achievement", "Add one measurable achievement"],
-  },
-]
-
-const skills = [
-  {
-    title: "UI",
-    items: ["Accessibility", "Responsive UI", "Design systems", "Performance"],
-  },
-  {
-    title: "Frameworks",
-    items: ["Next.js", "React", "Angular", "Vue"],
-  },
-  {
-    title: "APIs",
-    items: ["REST", "Auth flows", "Error handling", "Data validation"],
-  },
-  {
-    title: "Tools",
-    items: ["TypeScript", "Git", "Tailwind CSS", "Testing"],
-  },
-]
 
 function Badge({ text }: { text: string }) {
   return (
@@ -72,12 +25,9 @@ function Badge({ text }: { text: string }) {
 export default function AboutPage() {
   const projectCount = projects.length
 
-  const proof = [
-    { label: "Projects", value: String(projectCount) },
-    { label: "Years experience", value: "Add years" },
-    { label: "Industries", value: "Add list" },
-    { label: "Clients", value: "Add list" },
-  ]
+  const proof = aboutProof.map(item =>
+    item.label === "Projects" ? { ...item, value: String(projectCount) } : item
+  )
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-12">
@@ -93,9 +43,11 @@ export default function AboutPage() {
         <div className="relative">
           <p className="text-sm text-slate-600">About</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            {profile.name}
+            {aboutProfile.name}
           </h1>
-          <p className="mt-3 text-slate-600 max-w-2xl">{profile.summary}</p>
+          <p className="mt-3 text-slate-600 max-w-2xl">
+            {aboutProfile.summary}
+          </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -119,9 +71,9 @@ export default function AboutPage() {
           </div>
 
           <div className="mt-6 flex flex-wrap gap-2">
-            <Badge text={profile.headline} />
-            <Badge text={profile.location} />
-            <Badge text={profile.email} />
+            <Badge text={aboutProfile.headline} />
+            <Badge text={aboutProfile.location} />
+            <Badge text={aboutProfile.email} />
           </div>
         </div>
       </section>
@@ -170,7 +122,7 @@ export default function AboutPage() {
           </div>
 
           <div className="mt-6 space-y-6">
-            {timeline.map(item => (
+            {aboutTimeline.map(item => (
               <div
                 key={`${item.period}-${item.title}`}
                 className="rounded-2xl border border-slate-200 bg-white p-5"
@@ -199,7 +151,7 @@ export default function AboutPage() {
           <h2 className="text-xl font-semibold text-slate-900">Skills</h2>
 
           <div className="mt-6 space-y-6">
-            {skills.map(group => (
+            {aboutSkills.map(group => (
               <div key={group.title}>
                 <p className="text-sm font-semibold text-slate-900">
                   {group.title}
