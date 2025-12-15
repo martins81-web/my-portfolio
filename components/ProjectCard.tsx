@@ -1,14 +1,9 @@
-import Link from 'next/link'
+import Link from "next/link"
+import type { ProjectItem } from "@/data/projects"
 
-type Project = {
-  slug: string
-  title: string
-  description: string
-  technology: 'React' | 'Angular' | 'Vue' | 'Next.js'
-  stack?: string[]
-}
+export default function ProjectCard({ project }: { project: ProjectItem }) {
+  const stack = project.stack?.length ? project.stack : [project.technology]
 
-export default function ProjectCard({ project }: { project: Project }) {
   return (
     <Link
       href={`/projects/${project.slug}`}
@@ -22,22 +17,18 @@ export default function ProjectCard({ project }: { project: Project }) {
         {project.description}
       </p>
 
-      {project.stack && project.stack.length > 0 && (
-  <div className="flex flex-wrap gap-2 mb-4">
-    {project.stack.map(tech => (
-      <span
-        key={tech}
-        className="text-xs rounded-full bg-slate-100 px-2.5 py-1 text-slate-700"
-      >
-        {tech}
-      </span>
-    ))}
-  </div>
-)}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {stack.map(tech => (
+          <span
+            key={tech}
+            className="text-xs rounded-full bg-slate-100 px-2.5 py-1 text-slate-700"
+          >
+            {tech}
+          </span>
+        ))}
+      </div>
 
-      <span className="text-sm font-medium text-slate-900">
-        View project →
-      </span>
+      <span className="text-sm font-medium text-slate-900">View project →</span>
     </Link>
   )
 }
