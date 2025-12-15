@@ -23,9 +23,7 @@ export default function ResumePage() {
 
         <div className="flex flex-wrap gap-3 lg:justify-end">
           <a
-            href="/Eric_Martins_CV.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/resume/download"
             className="inline-flex items-center justify-center rounded-md bg-slate-900 px-5 py-2.5 text-white text-sm font-medium hover:bg-slate-700 transition"
           >
             Download PDF
