@@ -1,21 +1,38 @@
-import './globals.css'
-import Navigation from '../components/Navigation'
-import type { Metadata } from 'next'
+import "./globals.css"
+import Navigation from "../components/Navigation"
+import type { Metadata } from "next"
+import type { ReactNode } from "react"
+import { seo } from "../data/seo"
 
 export const metadata: Metadata = {
+  metadataBase: new URL(seo.siteUrl),
   title: {
-    default: 'Eric Martins | Front-End & API Developer',
-    template: '%s | Eric Martins',
+    default: seo.defaultTitle,
+    template: seo.titleTemplate,
   },
-  description:
-    'Front-End and API Developer specialized in React, Angular, Next.js and API integration.',
+  description: seo.description,
+  openGraph: {
+    type: seo.openGraph.type,
+    title: seo.defaultTitle,
+    description: seo.description,
+    url: seo.openGraph.url,
+  },
+  twitter: {
+    card: seo.twitter.card,
+    title: seo.defaultTitle,
+    description: seo.description,
+  },
+  robots: seo.robots,
 }
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-white text-slate-900">
+      <body className="min-h-screen bg-slate-50 text-slate-900">
         <Navigation />
-        {children}
+        <div className="mx-auto w-full max-w-6xl px-6">
+          <div className="py-10">{children}</div>
+        </div>
       </body>
     </html>
   )
