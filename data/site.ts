@@ -1,3 +1,12 @@
-import data from "./content/site.json"
+import { fetchGithubJson } from "@/lib/content"
 
-export const site = data
+type SiteJson = {
+  name: string
+  email: string
+  location: string
+  socials?: { github?: string; linkedin?: string }
+}
+
+export async function getSite() {
+  return fetchGithubJson<SiteJson>({ path: "data/content/site.json", revalidateSeconds: 30 })
+}

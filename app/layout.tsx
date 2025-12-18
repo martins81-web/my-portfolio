@@ -1,30 +1,37 @@
 import "./globals.css"
 import Navigation from "../components/Navigation"
+import Footer from "../components/Footer"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
-import { seo } from "../data/seo"
-import Footer from "../components/Footer"
+import { getSeo } from "../data/seo"
 
 
-export const metadata: Metadata = {
-  metadataBase: new URL(seo.siteUrl),
-  title: {
-    default: seo.defaultTitle,
-    template: seo.titleTemplate,
-  },
-  description: seo.description,
-  openGraph: {
-    type: seo.openGraph.type,
-    title: seo.defaultTitle,
+export const dynamic = "force-dynamic"
+
+
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await getSeo()
+
+  return {
+    metadataBase: new URL(seo.siteUrl),
+    title: {
+      default: seo.defaultTitle,
+      template: seo.titleTemplate,
+    },
     description: seo.description,
-    url: seo.openGraph.url,
-  },
-  twitter: {
-    card: seo.twitter.card,
-    title: seo.defaultTitle,
-    description: seo.description,
-  },
-  robots: seo.robots,
+    openGraph: {
+      type: seo.openGraph.type,
+      title: seo.defaultTitle,
+      description: seo.description,
+      url: seo.openGraph.url,
+    },
+    twitter: {
+      card: seo.twitter.card,
+      title: seo.defaultTitle,
+      description: seo.description,
+    },
+    robots: seo.robots,
+  }
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

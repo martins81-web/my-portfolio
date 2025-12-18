@@ -1,18 +1,15 @@
 import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from "next"
-import { projects } from "../../data/projects"
-import {
-  aboutMeta,
-  aboutProfile,
-  aboutProof,
-  aboutTimeline,
-  aboutSkills,
-} from "../../data/about"
+import { getAbout } from "../../data/about"
+import { getProjectsData } from "../../data/projects"
 
-export const metadata: Metadata = {
-  title: aboutMeta.title,
-  description: aboutMeta.description,
+export async function generateMetadata(): Promise<Metadata> {
+  const { aboutMeta } = await getAbout()
+  return {
+    title: aboutMeta.title,
+    description: aboutMeta.description,
+  }
 }
 
 function Badge({ text }: { text: string }) {
@@ -23,8 +20,13 @@ function Badge({ text }: { text: string }) {
   )
 }
 
-export default function AboutPage() {
-  const projectCount = projects.length
+export default async function AboutPage() {
+  const [{ aboutProfile, aboutProof, aboutTimeline, aboutSkills }, projectsData] = await Promise.all([
+    getAbout(),
+    getProjectsData(),
+  ])
+
+  const projectCount = projectsData.projects.length
 
   const proof = aboutProof.map(item =>
     item.label === "Projects" ? { ...item, value: String(projectCount) } : item
@@ -77,19 +79,18 @@ export default function AboutPage() {
             </div>
           </div>
 
-         <div className="w-full max-w-xs overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-          <div className="relative h-[360px] sm:h-[420px]">
-            <Image
-              src="/profile.jpg"
-              alt="Eric Martins"
-              fill
-              sizes="(max-width: 1024px) 320px, 320px"
-              className="object-cover object-[50%_18%]"
-              priority
-            />
+          <div className="w-full max-w-xs overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
+            <div className="relative h-[360px] sm:h-[420px]">
+              <Image
+                src="/profile.jpg"
+                alt="Eric Martins"
+                fill
+                sizes="(max-width: 1024px) 320px, 320px"
+                className="object-cover object-[50%_18%]"
+                priority
+              />
+            </div>
           </div>
-        </div>
-
         </div>
       </section>
 
