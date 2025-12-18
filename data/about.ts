@@ -1,11 +1,20 @@
+import type { Metadata } from "next"
+
 export type AboutProof = { label: string; value: string }
+
 export type AboutTimelineItem = {
   period: string
   title: string
   org: string
   bullets: string[]
 }
+
 export type AboutSkillGroup = { title: string; items: string[] }
+
+export const aboutMeta: Pick<Metadata, "title" | "description"> = {
+  title: "About",
+  description: "About Eric Martins, Front End and API Developer.",
+}
 
 export const aboutProfile = {
   name: "Eric Martins",
