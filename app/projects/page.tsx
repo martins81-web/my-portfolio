@@ -1,16 +1,19 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import ProjectsClient from "./ProjectsClient"
+import { getProjectsData } from "@/data/projects"
 
 export const metadata: Metadata = {
   title: "Projects",
   description: "Projects built with React, Angular, Vue, and Next.js.",
 }
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const data = await getProjectsData()
+
   return (
     <Suspense fallback={<ProjectsFallback />}>
-      <ProjectsClient />
+      <ProjectsClient projects={data.projects} allowedTechnologies={data.allowedTechnologies ?? []} />
     </Suspense>
   )
 }

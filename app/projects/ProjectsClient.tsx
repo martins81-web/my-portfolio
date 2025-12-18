@@ -2,38 +2,57 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { projects } from "../../data/projects"
 import ProjectCard from "../../components/ProjectCard"
+import type { Project } from "@/data/projects"
 
-const technologies = ["All", "React", "Angular", "Vue", "Next.js"] as const
-type TechFilter = (typeof technologies)[number]
-
-function isTechFilter(value: string | null): value is TechFilter {
-  return Boolean(value && (technologies as readonly string[]).includes(value))
+type Props = {
+  projects: Project[]
+  allowedTechnologies: string[]
 }
 
-export default function ProjectsClient() {
+function isAllowedTech(value: string | null, allowed: string[]) {
+  return Boolean(value && allowed.includes(value))
+}
+
+export default function ProjectsClient({ projects, allowedTechnologies }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  const techList = useMemo(() => {
+    const list =
+      allowedTechnologies.length > 0
+        ? allowedTechnologies
+        : Array.from(new Set(projects.map(p => p.technology))).sort()
+
+    return ["All", ...list]
+  }, [allowedTechnologies, projects])
+
   const initial = searchParams.get("tech")
-  const [filter, setFilter] = useState<TechFilter>(
-    isTechFilter(initial) ? initial : "All"
-  )
+  const [filter, setFilter] = useState<string>(() => {
+    if (initial === "All") return "All"
+    if (isAllowedTech(initial, techList)) return initial as string
+    return "All"
+  })
 
   useEffect(() => {
     const current = searchParams.get("tech")
-    if (isTechFilter(current)) setFilter(current)
+    if (current === null) {
+      setFilter("All")
+      return
+    }
+    if (current === "All") {
+      setFilter("All")
+      return
+    }
+    if (isAllowedTech(current, techList)) setFilter(current)
     else setFilter("All")
-  }, [searchParams])
+  }, [searchParams, techList])
 
   const filteredProjects = useMemo(() => {
-    return filter === "All"
-      ? projects
-      : projects.filter(p => p.technology === filter)
-  }, [filter])
+    return filter === "All" ? projects : projects.filter(p => p.technology === filter)
+  }, [filter, projects])
 
-  function setTech(next: TechFilter) {
+  function setTech(next: string) {
     setFilter(next)
 
     const params = new URLSearchParams(searchParams.toString())
@@ -54,7 +73,7 @@ export default function ProjectsClient() {
       </div>
 
       <div className="flex flex-wrap gap-3 mb-8">
-        {technologies.map(tech => (
+        {techList.map(tech => (
           <button
             key={tech}
             onClick={() => setTech(tech)}
