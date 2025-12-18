@@ -1,16 +1,21 @@
+import data from "./content/seo.json"
+
+const openGraphType = data.openGraph.type as "website" | "article" | "profile" | "book"
+const twitterCard = data.twitter.card as "summary" | "summary_large_image" | "app" | "player"
+
 export const seo = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  siteName: "Eric Martins",
-  defaultTitle: "Eric Martins | Front-End & API Developer",
-  titleTemplate: "%s | Eric Martins",
-  description:
-    "Front-End and API Developer specialized in React, Angular, Next.js and API integration.",
+  siteName: data.siteName,
+  defaultTitle: data.defaultTitle,
+  titleTemplate: data.titleTemplate,
+  description: data.description,
   openGraph: {
-    type: "website" as const,
-    url: "/",
+    ...data.openGraph,
+    type: openGraphType,
   },
   twitter: {
-    card: "summary_large_image" as const,
+    ...data.twitter,
+    card: twitterCard,
   },
-  robots: { index: true, follow: true },
+  robots: data.robots,
 }
