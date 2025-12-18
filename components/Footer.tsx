@@ -29,11 +29,19 @@ function GithubIcon() {
 
 function LinkedInIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="-2 -2 28 28"
+      fill="currentColor"
+      aria-hidden="true"
+      style={{ overflow: "visible" }}
+    >
       <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5S1.12 1 2.5 1s2.48 1.12 2.48 2.5zM0.5 23.5h4V7.98h-4V23.5zM8.5 7.98h3.83v2.12h.05c.53-1 1.84-2.12 3.79-2.12c4.05 0 4.8 2.66 4.8 6.12v9.4h-4v-8.33c0-1.99-.04-4.55-2.78-4.55c-2.78 0-3.2 2.17-3.2 4.41v8.47h-4V7.98z" />
     </svg>
   )
 }
+
 const wrap: React.CSSProperties = {
   marginTop: 32,
 }
@@ -122,6 +130,7 @@ export default function Footer() {
     placeItems: "center",
     textDecoration: "none",
     opacity: 0.9,
+    overflow: "visible"
   }
 
   const githubUrl = site.socials?.github
