@@ -34,7 +34,9 @@ function LinkedInIcon() {
     </svg>
   )
 }
-
+const wrap: React.CSSProperties = {
+  marginTop: 32,
+}
 export default function Footer() {
   const wrap: React.CSSProperties = {
     borderTop: "1px solid rgba(255,255,255,0.12)",

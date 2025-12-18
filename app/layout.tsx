@@ -32,10 +32,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="min-h-screen bg-slate-50 text-slate-900">
         <Navigation />
+
         <div className="mx-auto w-full max-w-6xl px-6">
           <div className="py-10">{children}</div>
+
+          <div className="mt-6 h-px w-full bg-slate-200" />
         </div>
-         <Footer />
+
+        <Footer />
       </body>
     </html>
   )
