@@ -16,16 +16,24 @@
   "projects": [
     {
       "slug": "react-admin-dashboard",
-      "title": "Smart Admin Dashboard",
+      "title": "Smart Admin Dashboard App",
       "description": "Admin dashboard with charts, tables and API integration.",
       "technology": "React",
       "problem": "Internal teams need a clear and fast way to visualize data and manage users.",
-      "features": ["Reusable UI components"],
-      "challenges": ["Managing state across multiple components"],
-      "learnings": ["Improved component design"],
-      "stack": ["React", "TypeScript", "REST API"]
+      "features": [
+        "Reusable UI components"
+      ],
+      "challenges": [
+        "Managing state across multiple components"
+      ],
+      "learnings": [
+        "Improved component design"
+      ],
+      "stack": [
+        "React",
+        "TypeScript",
+        "REST API"
+      ]
     }
   ]
 }
-
-
