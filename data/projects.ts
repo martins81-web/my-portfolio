@@ -1,4 +1,4 @@
-import data from "./content/projects.json"
+import { fetchGithubJson } from "@/lib/content"
 
 export type Project = {
   slug: string
@@ -17,13 +17,14 @@ type ProjectsJson = {
   projects: Project[]
 }
 
-const parsed = data as unknown as ProjectsJson
+export async function getProjectsData() {
+  return fetchGithubJson<ProjectsJson>({
+    path: "data/content/projects.json",
+    revalidateSeconds: 30,
+  })
+}
 
-export const allowedTechnologies: string[] =
-  parsed.allowedTechnologies ?? ["React", "Angular", "Vue", "Next.js"]
-
-export const projects: Project[] = parsed.projects
-
-export function getProjectBySlug(slug: string): Project | undefined {
-  return projects.find(p => p.slug === slug)
+export async function getProjectBySlug(slug: string): Promise<Project | undefined> {
+  const data = await getProjectsData()
+  return data.projects.find(p => p.slug === slug)
 }
