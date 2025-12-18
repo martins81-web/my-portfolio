@@ -14,31 +14,16 @@
     "Tailwind CSS"
   ],
   "projects": [
-    {
-<<<<<<< HEAD
-      "slug": "react-admin-dashboard",
-      "title": "Smart Admin Dashboard App",
-=======
-      "slug": "react-admin-dashboard-app",
-      "title": "Smart Admin Dashboard",
->>>>>>> 710201b (Add JSON content files)
-      "description": "Admin dashboard with charts, tables and API integration.",
-      "technology": "React",
-      "problem": "Internal teams need a clear and fast way to visualize data and manage users.",
-      "features": [
-        "Reusable UI components"
-      ],
-      "challenges": [
-        "Managing state across multiple components"
-      ],
-      "learnings": [
-        "Improved component design"
-      ],
-      "stack": [
-        "React",
-        "TypeScript",
-        "REST API"
-      ]
-    }
+   {
+  "slug": "react-admin-dashboard",
+  "title": "Smart Admin Dashboard App",
+  "description": "Admin dashboard with charts, tables and API integration.",
+  "technology": "React",
+  "problem": "Internal teams need a clear and fast way to visualize data and manage users.",
+  "features": ["Reusable UI components"],
+  "challenges": ["Managing state across multiple components"],
+  "learnings": ["Improved component design"],
+  "stack": ["React", "TypeScript", "REST API"]
+}
   ]
 }
