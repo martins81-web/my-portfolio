@@ -3,6 +3,8 @@ import Navigation from "../components/Navigation"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import { seo } from "../data/seo"
+import Footer from "../components/Footer"
+
 
 export const metadata: Metadata = {
   metadataBase: new URL(seo.siteUrl),
@@ -33,6 +35,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto w-full max-w-6xl px-6">
           <div className="py-10">{children}</div>
         </div>
+         <Footer />
       </body>
     </html>
   )
