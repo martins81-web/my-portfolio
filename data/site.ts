@@ -1,9 +1,3 @@
-export const site = {
-  name: "Eric Martins",
-  email: "ericmartins81@gmail.com",
-  location: "Quebec, Canada",
-  socials: {
-    github: "https://github.com/martins81-web",
-    linkedin: "https://www.linkedin.com/in/ericmartins81/",
-  },
-}
+import data from "./content/site.json"
+
+export const site = data

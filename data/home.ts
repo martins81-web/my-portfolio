@@ -1,35 +1,6 @@
-export const homeHero = {
-  title: "Eric Martins",
-  subtitle: "Front End and API Developer",
-  description:
-    "I build clean user interfaces and reliable API integrations with TypeScript, modern frameworks, and performance focused UI.",
-  primaryCta: { label: "View projects", href: "/projects" },
-  secondaryCta: { label: "Download resume", href: "/resume" },
-}
+import home from "./content/home.json"
 
-export const homeHighlights = [
-  {
-    title: "UI that feels fast",
-    description: "Accessible components, responsive layouts, and clean design systems.",
-  },
-  {
-    title: "API integrations",
-    description: "REST integrations, auth flows, error handling, and data validation.",
-  },
-  {
-    title: "Maintainable code",
-    description: "Type safe patterns, reusable components, and clear structure.",
-  },
-]
-
-export const featuredProjectSlugs = [
-  "react-admin-dashboard",
-]
-
-export const testimonials = [
-  {
-    name: "Add name",
-    role: "Add role",
-    quote: "Add a short quote about your work.",
-  },
-]
+export const homeHero = home.homeHero
+export const homeHighlights = home.homeHighlights
+export const featuredProjectSlugs = home.featuredProjectSlugs
+export const testimonials = home.testimonials
