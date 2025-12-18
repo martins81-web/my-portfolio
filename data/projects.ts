@@ -1,8 +1,10 @@
+import data from "./content/projects.json"
+
 export type Project = {
   slug: string
   title: string
   description: string
-  technology: "React" | "Angular" | "Vue" | "Next.js"
+  technology: string
   problem: string
   features: string[]
   challenges: string[]
@@ -10,19 +12,17 @@ export type Project = {
   stack?: string[]
 }
 
-export const projects: Project[] = [
-  {
-    slug: "react-admin-dashboard",
-    title: "Smart Admin Dashboard",
-    description: "Admin dashboard with charts, tables and API integration.",
-    technology: "React",
-    problem:
-      "Internal teams need a clear and fast way to visualize data and manage users.",
-    features: ["Reusable UI components"],
-    challenges: ["Managing state across multiple components"],
-    learnings: ["Improved component design"],
-  },
-]
+type ProjectsJson = {
+  allowedTechnologies?: string[]
+  projects: Project[]
+}
+
+const parsed = data as unknown as ProjectsJson
+
+export const allowedTechnologies: string[] =
+  parsed.allowedTechnologies ?? ["React", "Angular", "Vue", "Next.js"]
+
+export const projects: Project[] = parsed.projects
 
 export function getProjectBySlug(slug: string): Project | undefined {
   return projects.find(p => p.slug === slug)
