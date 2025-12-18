@@ -3,8 +3,14 @@
     "title": "Eric Martins",
     "subtitle": "Front End and API Developer",
     "description": "I build clean user interfaces and reliable API integrations with TypeScript, modern frameworks, and performance focused UI.",
-    "primaryCta": { "label": "View projects", "href": "/projects" },
-    "secondaryCta": { "label": "Download resume", "href": "/resume" }
+    "primaryCta": {
+      "label": "View projects",
+      "href": "/projects"
+    },
+    "secondaryCta": {
+      "label": "Download resume",
+      "href": "/resume"
+    }
   },
   "homeHighlights": [
     {
@@ -20,7 +26,9 @@
       "description": "Type safe patterns, reusable components, and clear structure."
     }
   ],
-  "featuredProjectSlugs": ["react-admin-dashboard"],
+  "featuredProjectSlugs": [
+    "react-admin-dashboard"
+  ],
   "testimonials": [
     {
       "name": "Add name",
