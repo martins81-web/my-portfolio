@@ -5,3 +5,16 @@ html, body {
   color: #0f172a; /* slate-900 */
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+.bg-grid-fade {
+  background-image:
+    radial-gradient(900px circle at 20% 10%, rgba(15, 23, 42, 0.07), transparent 60%),
+    radial-gradient(700px circle at 80% 30%, rgba(15, 23, 42, 0.05), transparent 55%),
+    linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: auto, auto, 56px 56px, 56px 56px;
+  background-position: center, center, center, center;
+  mask-image: radial-gradient(circle at 50% 0%, black 40%, transparent 70%);
+  opacity: 0.9;
+}

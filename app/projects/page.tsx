@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import ProjectsClient from "./ProjectsClient"
+import { projectsMeta } from "../../data/projects"
 
 export const metadata: Metadata = {
-  title: "Projects",
-  description: "Projects built with React, Angular, Vue, and Next.js.",
+  title: projectsMeta.title,
+  description: projectsMeta.description,
 }
 
 export default function ProjectsPage() {
