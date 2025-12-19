@@ -10,12 +10,13 @@ export async function uploadAsset(opts: { file: File; path: string; message: str
     body: fd,
   })
 
+  const json = (await res.json().catch(() => null)) as { ok: boolean; error?: string } | null
+
   if (!res.ok) {
-    const text = await res.text()
-    throw new Error(text || "Upload failed")
+    const err = json?.error || (await res.text().catch(() => "")) || "Upload failed"
+    throw new Error(err)
   }
 
-  const json = (await res.json()) as { ok: boolean; error?: string }
-  if (!json.ok) throw new Error(json.error || "Upload failed")
+  if (!json?.ok) throw new Error(json?.error || "Upload failed")
   return json
 }

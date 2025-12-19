@@ -1,18 +1,10 @@
+// app/admin/forms/ResumeForm.tsx
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import type { ResumeContent } from "@/types/resume"
-import { uploadAsset } from "./uploadAsset"
 import { saveContent } from "./saveContent"
-
-function getVersionFromUrl(url: string) {
-  try {
-    const u = new URL(url)
-    return u.searchParams.get("v") || ""
-  } catch {
-    return ""
-  }
-}
+import { uploadAsset } from "./uploadAsset"
 
 export default function ResumeForm({
   initial,
@@ -25,163 +17,164 @@ export default function ResumeForm({
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState("")
 
-  const initialVersion = useMemo(() => {
-    const url = (initial?.resumeUrl || "").trim()
-    return url ? getVersionFromUrl(url) : ""
-  }, [initial])
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const [viewerVersion, setViewerVersion] = useState(initialVersion)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [pendingPreview, setPendingPreview] = useState<string>("")
+  const [uploading, setUploading] = useState(false)
+  const [uploadMsg, setUploadMsg] = useState("")
+  const [resumeBust, setResumeBust] = useState(() => Date.now())
 
-  const [resumeFile, setResumeFile] = useState<File | null>(null)
-  const [resumePreviewUrl, setResumePreviewUrl] = useState<string>("")
-  const [kept, setKept] = useState(false)
+  const baseUrl = form.resumeUrl?.trim() ? form.resumeUrl.trim() : "/api/asset/resume"
+  const previewSrc = pendingPreview ? pendingPreview : `${baseUrl}?v=${resumeBust}`
 
-  useEffect(() => {
-    if (!resumeFile) {
-      setResumePreviewUrl("")
-      setKept(false)
-      return
-    }
-    const url = URL.createObjectURL(resumeFile)
-    setResumePreviewUrl(url)
-    return () => URL.revokeObjectURL(url)
-  }, [resumeFile])
+  function patch(next: ResumeContent) {
+    setForm(next)
+    onUpdate?.(next)
+  }
 
-  async function onKeep() {
-    if (!resumeFile) return
+  const canSave = useMemo(() => Boolean(baseUrl), [baseUrl])
 
+  async function onSave() {
     setSaving(true)
     setMsg("")
     try {
-      const out = await uploadAsset({
-        path: "data/assets/resume.pdf",
-        file: resumeFile,
-        message: "Update resume pdf",
-      })
-
-      const resumeUrl = `${out.url}?v=${encodeURIComponent(out.sha)}`
-      const next: ResumeContent = { resumeUrl }
-
-      await saveContent("resume", next)
-
-      setForm(next)
-      setViewerVersion(out.sha)
-      setKept(true)
+      await saveContent("resume", form)
       setMsg("Saved")
-      onUpdate?.(next)
-    } catch (e: any) {
-      setMsg(e?.message || "Save failed")
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Save failed")
     } finally {
       setSaving(false)
     }
   }
 
-  function onCancel() {
-    setResumeFile(null)
-    setMsg("")
+  function onPickFile(file: File | null) {
+    setUploadMsg("")
+    if (!file) return
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview)
+    setPendingFile(file)
+    setPendingPreview(URL.createObjectURL(file))
   }
 
-  const hasSavedResume = Boolean((form.resumeUrl || "").trim())
-  const savedIframeSrc = hasSavedResume
-    ? `/resume/view?v=${encodeURIComponent(viewerVersion || "0")}`
-    : ""
-  const showingPreview = Boolean(resumeFile && resumePreviewUrl)
+  function cancelPending() {
+    setUploadMsg("")
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview)
+    setPendingFile(null)
+    setPendingPreview("")
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  async function keepPending() {
+    if (!pendingFile) return
+    setUploading(true)
+    setUploadMsg("")
+    try {
+      await uploadAsset({
+        file: pendingFile,
+        path: "public/Eric_Martins_CV.pdf",
+        message: "Update resume pdf",
+      })
+
+      if (!form.resumeUrl || form.resumeUrl !== "/api/asset/resume") {
+        patch({ ...form, resumeUrl: "/api/asset/resume" })
+      }
+
+      setResumeBust(Date.now())
+      cancelPending()
+      setUploadMsg("Uploaded")
+    } catch (e) {
+      setUploadMsg(e instanceof Error ? e.message : "Upload failed")
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-bold">Resume</h2>
-      <p className="mt-1 text-sm text-slate-600">Choose a PDF. Preview it. Keep to publish.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold">Resume</h2>
+          <p className="mt-1 text-sm text-slate-600">Upload replaces public/Eric_Martins_CV.pdf.</p>
+        </div>
+      </div>
 
       <div className="mt-6 grid gap-6">
-        <section className="grid gap-3">
-          <h3 className="text-sm font-semibold text-slate-900">Upload</h3>
-
+        <section className="rounded-2xl border border-slate-200 p-5">
           <div className="flex flex-wrap items-center gap-3">
             <input
-              id="resumeUpload"
+              ref={fileInputRef}
               type="file"
               accept="application/pdf"
-              disabled={saving}
-              onChange={e => {
-                const f = e.target.files?.[0] || null
-                setResumeFile(f)
-                setKept(false)
-                e.currentTarget.value = ""
-                setMsg("")
-              }}
               className="hidden"
+              id="resume-file"
+              onChange={e => onPickFile(e.target.files?.[0] || null)}
             />
 
             <label
-              htmlFor="resumeUpload"
-              className={[
-                "inline-flex cursor-pointer items-center justify-center rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50",
-                saving ? "pointer-events-none opacity-50" : "",
-              ].join(" ")}
+              htmlFor="resume-file"
+              className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             >
               Choose file
             </label>
 
-            {resumeFile && !kept ? (
+            {pendingFile ? (
               <>
                 <button
                   type="button"
-                  onClick={() => void onKeep()}
-                  disabled={saving}
+                  onClick={keepPending}
+                  disabled={uploading}
                   className={[
-                    "rounded-xl px-3 py-2 text-sm font-semibold transition",
-                    saving
+                    "rounded-xl px-4 py-2 text-sm font-semibold transition",
+                    uploading
                       ? "bg-slate-200 text-slate-500 cursor-not-allowed"
                       : "bg-slate-900 text-white hover:bg-slate-700",
                   ].join(" ")}
                 >
-                  Keep
+                  {uploading ? "Keeping" : "Keep"}
                 </button>
 
                 <button
                   type="button"
-                  onClick={onCancel}
-                  disabled={saving}
-                  className={[
-                    "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50",
-                    saving ? "pointer-events-none opacity-50" : "",
-                  ].join(" ")}
+                  onClick={cancelPending}
+                  disabled={uploading}
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Cancel
                 </button>
-
-                <span className="text-xs text-slate-600">Selected. Preview below.</span>
               </>
-            ) : resumeFile && kept ? (
-              <span className="text-xs text-slate-600">Saved.</span>
-            ) : (
-              <span className="text-xs text-slate-600">No pending change.</span>
-            )}
-          </div>
+            ) : null}
 
-          <div className="text-sm text-slate-600">{saving ? "Saving..." : msg}</div>
+            <span className="text-sm text-slate-600">{uploadMsg}</span>
+          </div>
         </section>
 
-        <section className="rounded-xl border border-slate-200 overflow-hidden">
+        <section className="rounded-2xl border border-slate-200 overflow-hidden bg-white">
           <div className="border-b border-slate-200 px-4 py-3 text-sm text-slate-600">
-            {showingPreview ? "Preview" : hasSavedResume ? "Published resume" : "No resume uploaded"}
+            Preview
           </div>
-
-          {showingPreview ? (
-            <iframe
-              src={resumePreviewUrl}
-              title="Resume preview"
-              className="w-full h-[75vh] min-h-[520px]"
-            />
-          ) : hasSavedResume ? (
-            <iframe
-              key={viewerVersion || "0"}
-              src={savedIframeSrc}
-              title="Resume PDF"
-              className="w-full h-[75vh] min-h-[520px]"
-            />
-          ) : null}
+          <iframe
+            key={previewSrc}
+            src={previewSrc}
+            title="Resume preview"
+            className="w-full h-[75vh] min-h-[520px]"
+          />
         </section>
+
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            onClick={onSave}
+            disabled={!canSave || saving}
+            className={[
+              "rounded-xl px-4 py-2 text-sm font-semibold transition",
+              !canSave || saving
+                ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                : "bg-slate-900 text-white hover:bg-slate-700",
+            ].join(" ")}
+          >
+            {saving ? "Saving" : "Save"}
+          </button>
+          <span className="text-sm text-slate-600">{msg}</span>
+        </div>
       </div>
     </div>
   )
