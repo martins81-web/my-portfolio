@@ -1,5 +1,6 @@
 {
   "allowedTechnologies": [
+    "React",
     "Next.js",
     "TypeScript",
     "Angular",
@@ -10,7 +11,7 @@
     "GraphQL",
     "PostgreSQL",
     "MongoDB",
-    "React"
+    "Tailwind CSS"
   ],
   "projects": [
     {
