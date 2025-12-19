@@ -13,7 +13,6 @@ type SeoJson = {
 export async function getSeo() {
   const data = await fetchGithubJson<SeoJson>({
     path: "data/content/seo.json",
-    revalidateSeconds: 30,
   })
 
   const openGraphType = data.openGraph.type as "website" | "article" | "profile" | "book"

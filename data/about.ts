@@ -30,7 +30,7 @@ type AboutJson = {
 
 export async function getAbout() {
   return fetchGithubJson<AboutJson>({
-    path: "data/content/about.json",
-    revalidateSeconds: 30,
-  })
+  path: "data/content/about.json",
+})
+
 }

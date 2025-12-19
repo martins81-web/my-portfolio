@@ -19,9 +19,9 @@ type ProjectsJson = {
 
 export async function getProjectsData() {
   return fetchGithubJson<ProjectsJson>({
-    path: "data/content/projects.json",
-    revalidateSeconds: 30,
-  })
+  path: "data/content/projects.json",
+})
+
 }
 
 export async function getProjectBySlug(slug: string): Promise<Project | undefined> {

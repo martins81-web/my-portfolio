@@ -14,5 +14,7 @@ type HomeJson = {
 }
 
 export async function getHome() {
-  return fetchGithubJson<HomeJson>({ path: "data/content/home.json", revalidateSeconds: 30 })
+  return fetchGithubJson<HomeJson>({
+  path: "data/content/home.json",
+})
 }

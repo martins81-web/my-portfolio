@@ -8,5 +8,7 @@ type SiteJson = {
 }
 
 export async function getSite() {
-  return fetchGithubJson<SiteJson>({ path: "data/content/site.json", revalidateSeconds: 30 })
+  return fetchGithubJson<SiteJson>({
+  path: "data/content/site.json",
+})
 }
