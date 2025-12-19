@@ -2,25 +2,13 @@
 
 import { useMemo, useState } from "react"
 import { saveContent } from "./saveContent"
-
-type HomeJson = {
-  homeHero: {
-    title: string
-    subtitle: string
-    description: string
-    primaryCta: { label: string; href: string }
-    secondaryCta: { label: string; href: string }
-  }
-  homeHighlights: Array<{ title: string; description: string }>
-  featuredProjectSlugs: string[]
-  testimonials: Array<{ name: string; role: string; quote: string }>
-}
+import type { HomeContent } from "@/types/home"
 
 const emptyHighlight = () => ({ title: "", description: "" })
 const emptyTestimonial = () => ({ name: "", role: "", quote: "" })
 
-export default function HomeForm({ initial }: { initial: HomeJson }) {
-  const [form, setForm] = useState<HomeJson>(initial)
+export default function HomeForm({ initial }: { initial: HomeContent }) {
+  const [form, setForm] = useState<HomeContent>(initial)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState("")
 
@@ -41,9 +29,9 @@ export default function HomeForm({ initial }: { initial: HomeJson }) {
     }
   }
 
-  function updateHero<K extends keyof HomeJson["homeHero"]>(
+  function updateHero<K extends keyof HomeContent["homeHero"]>(
     key: K,
-    value: HomeJson["homeHero"][K]
+    value: HomeContent["homeHero"][K]
   ) {
     setForm(s => ({ ...s, homeHero: { ...s.homeHero, [key]: value } }))
   }
@@ -103,11 +91,7 @@ export default function HomeForm({ initial }: { initial: HomeJson }) {
     }))
   }
 
-  function updateTestimonial(
-    i: number,
-    key: "name" | "role" | "quote",
-    value: string
-  ) {
+  function updateTestimonial(i: number, key: "name" | "role" | "quote", value: string) {
     setForm(s => ({
       ...s,
       testimonials: s.testimonials.map((t, idx) =>

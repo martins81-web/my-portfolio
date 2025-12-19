@@ -2,23 +2,16 @@
 
 import { useMemo, useState } from "react"
 import { saveContent } from "./saveContent"
+import type { SiteContent } from "@/types/site"
 
-type Site = {
-  name: string
-  email: string
-  location: string
-  socials: {
-    github?: string
-    linkedin?: string
-  }
-}
-
-export default function SiteForm({ initial }: { initial: Site }) {
-  const [form, setForm] = useState<Site>(initial)
+export default function SiteForm({ initial }: { initial: SiteContent }) {
+  const [form, setForm] = useState<SiteContent>(initial)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState("")
 
-  const canSave = useMemo(() => Boolean(form.name.trim() && form.email.trim()), [form])
+  const canSave = useMemo(() => {
+    return Boolean(form.name.trim() && form.email.trim())
+  }, [form.name, form.email])
 
   async function onSave() {
     setSaving(true)
@@ -71,7 +64,10 @@ export default function SiteForm({ initial }: { initial: Site }) {
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
               value={form.socials.github ?? ""}
               onChange={e =>
-                setForm(s => ({ ...s, socials: { ...s.socials, github: e.target.value } }))
+                setForm(s => ({
+                  ...s,
+                  socials: { ...s.socials, github: e.target.value || undefined },
+                }))
               }
             />
           </Field>
@@ -81,7 +77,10 @@ export default function SiteForm({ initial }: { initial: Site }) {
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
               value={form.socials.linkedin ?? ""}
               onChange={e =>
-                setForm(s => ({ ...s, socials: { ...s.socials, linkedin: e.target.value } }))
+                setForm(s => ({
+                  ...s,
+                  socials: { ...s.socials, linkedin: e.target.value || undefined },
+                }))
               }
             />
           </Field>

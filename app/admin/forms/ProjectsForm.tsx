@@ -2,23 +2,10 @@
 
 import { useMemo, useState } from "react"
 import { saveContent } from "./saveContent"
+import type { ProjectContentItem, ProjectsContent, ProjectListKey } from "@/types/projects"
 
-type ProjectsJson = {
-  allowedTechnologies: string[]
-  projects: Array<{
-    slug: string
-    title: string
-    description: string
-    technology: string
-    problem: string
-    features: string[]
-    challenges: string[]
-    learnings: string[]
-    stack?: string[]
-  }>
-}
 
-const emptyProject = (): ProjectsJson["projects"][number] => ({
+const emptyProject = (): ProjectContentItem => ({
   slug: "",
   title: "",
   description: "",
@@ -30,8 +17,8 @@ const emptyProject = (): ProjectsJson["projects"][number] => ({
   stack: [""],
 })
 
-export default function ProjectsForm({ initial }: { initial: ProjectsJson }) {
-  const [form, setForm] = useState<ProjectsJson>(initial)
+export default function ProjectsForm({ initial }: { initial: ProjectsContent }) {
+  const [form, setForm] = useState<ProjectsContent>(initial)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState("")
 
@@ -71,10 +58,10 @@ export default function ProjectsForm({ initial }: { initial: ProjectsJson }) {
     }))
   }
 
-  function updateProjectField(
+  function updateProjectField<K extends keyof ProjectContentItem>(
     i: number,
-    key: keyof ProjectsJson["projects"][number],
-    value: any
+    key: K,
+    value: ProjectContentItem[K]
   ) {
     setForm(s => ({
       ...s,
@@ -92,7 +79,7 @@ export default function ProjectsForm({ initial }: { initial: ProjectsJson }) {
 
   function updateStringList(
     projectIndex: number,
-    key: "features" | "challenges" | "learnings" | "stack",
+    key: ProjectListKey,
     itemIndex: number,
     value: string
   ) {
@@ -107,10 +94,7 @@ export default function ProjectsForm({ initial }: { initial: ProjectsJson }) {
     }))
   }
 
-  function addStringListItem(
-    projectIndex: number,
-    key: "features" | "challenges" | "learnings" | "stack"
-  ) {
+  function addStringListItem(projectIndex: number, key: ProjectListKey) {
     setForm(s => ({
       ...s,
       projects: s.projects.map((p, idx) => {
@@ -121,11 +105,7 @@ export default function ProjectsForm({ initial }: { initial: ProjectsJson }) {
     }))
   }
 
-  function removeStringListItem(
-    projectIndex: number,
-    key: "features" | "challenges" | "learnings" | "stack",
-    itemIndex: number
-  ) {
+  function removeStringListItem(projectIndex: number, key: ProjectListKey, itemIndex: number) {
     setForm(s => ({
       ...s,
       projects: s.projects.map((p, idx) => {
@@ -190,25 +170,20 @@ export default function ProjectsForm({ initial }: { initial: ProjectsJson }) {
 
           <div className="grid gap-5">
             {form.projects.map((p, i) => {
-              const techOptions = form.allowedTechnologies
-                .map(x => x.trim())
-                .filter(Boolean)
+              const techOptions = form.allowedTechnologies.map(x => x.trim()).filter(Boolean)
 
-              const showTech = p.technology.trim()
-              const selectOptions = showTech && !techOptions.includes(showTech)
-                ? [showTech, ...techOptions]
-                : techOptions
+              const currentTech = p.technology.trim()
+              const selectOptions =
+                currentTech && !techOptions.includes(currentTech)
+                  ? [currentTech, ...techOptions]
+                  : techOptions
 
               return (
                 <div key={i} className="rounded-2xl border border-slate-200 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-semibold text-slate-600">
-                        Project {i + 1}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-700">
-                        Slug and title are required
-                      </p>
+                      <p className="text-xs font-semibold text-slate-600">Project {i + 1}</p>
+                      <p className="mt-1 text-sm text-slate-700">Slug and title are required</p>
                     </div>
 
                     <button

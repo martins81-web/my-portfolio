@@ -2,23 +2,31 @@
 
 import { useMemo, useState } from "react"
 import { saveContent } from "./saveContent"
+import type { OpenGraphType, TwitterCard, SeoContent } from "@/types/seo"
+import { OPEN_GRAPH_TYPES, TWITTER_CARDS } from "@/types/seo"
 
-type Seo = {
-  siteName: string
-  defaultTitle: string
-  titleTemplate: string
-  description: string
-  openGraph: { type: string; url: string }
-  twitter: { card: string }
-  robots: { index: boolean; follow: boolean }
-}
+const TITLE_PREFIX = "%s | "
 
-export default function SeoForm({ initial }: { initial: Seo }) {
-  const [form, setForm] = useState<Seo>(initial)
+export default function SeoForm({ initial }: { initial: SeoContent }) {
+  const initialSuffix = initial.titleTemplate?.startsWith(TITLE_PREFIX)
+    ? initial.titleTemplate.slice(TITLE_PREFIX.length)
+    : initial.titleTemplate ?? ""
+
+  const [form, setForm] = useState<SeoContent>({
+    ...initial,
+    titleTemplate: initial.titleTemplate?.startsWith(TITLE_PREFIX)
+      ? initial.titleTemplate
+      : `${TITLE_PREFIX}${initialSuffix}`,
+  })
+
+  const [titleSuffix, setTitleSuffix] = useState(initialSuffix)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState("")
 
-  const canSave = useMemo(() => Boolean(form.siteName.trim() && form.defaultTitle.trim()), [form])
+  const canSave = useMemo(
+    () => Boolean(form.siteName.trim() && form.defaultTitle.trim()),
+    [form]
+  )
 
   async function onSave() {
     setSaving(true)
@@ -31,6 +39,11 @@ export default function SeoForm({ initial }: { initial: Seo }) {
     } finally {
       setSaving(false)
     }
+  }
+
+  function onChangeTitleSuffix(next: string) {
+    setTitleSuffix(next)
+    setForm(s => ({ ...s, titleTemplate: `${TITLE_PREFIX}${next}` }))
   }
 
   return (
@@ -51,37 +64,60 @@ export default function SeoForm({ initial }: { initial: Seo }) {
             <input
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
               value={form.defaultTitle}
-              onChange={e => setForm(s => ({ ...s, defaultTitle: e.target.value }))}
+              onChange={e =>
+                setForm(s => ({ ...s, defaultTitle: e.target.value }))
+              }
             />
           </Field>
         </div>
 
         <Field label="Title template">
-          <input
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-            value={form.titleTemplate}
-            onChange={e => setForm(s => ({ ...s, titleTemplate: e.target.value }))}
-          />
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+              {TITLE_PREFIX}
+            </span>
+            <input
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              value={titleSuffix}
+              onChange={e => onChangeTitleSuffix(e.target.value)}
+              placeholder="Eric Martins"
+            />
+          </div>
         </Field>
+
 
         <Field label="Description">
           <textarea
             className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
             rows={3}
             value={form.description}
-            onChange={e => setForm(s => ({ ...s, description: e.target.value }))}
+            onChange={e =>
+              setForm(s => ({ ...s, description: e.target.value }))
+            }
           />
         </Field>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="OpenGraph type">
-            <input
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            <select
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
               value={form.openGraph.type}
               onChange={e =>
-                setForm(s => ({ ...s, openGraph: { ...s.openGraph, type: e.target.value } }))
+                setForm(s => ({
+                  ...s,
+                  openGraph: {
+                    ...s.openGraph,
+                    type: e.target.value as OpenGraphType,
+                  },
+                }))
               }
-            />
+            >
+              {OPEN_GRAPH_TYPES.map(t => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
           </Field>
 
           <Field label="OpenGraph url">
@@ -89,7 +125,10 @@ export default function SeoForm({ initial }: { initial: Seo }) {
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
               value={form.openGraph.url}
               onChange={e =>
-                setForm(s => ({ ...s, openGraph: { ...s.openGraph, url: e.target.value } }))
+                setForm(s => ({
+                  ...s,
+                  openGraph: { ...s.openGraph, url: e.target.value },
+                }))
               }
             />
           </Field>
@@ -97,18 +136,34 @@ export default function SeoForm({ initial }: { initial: Seo }) {
 
         <div className="grid gap-5 sm:grid-cols-3">
           <Field label="Twitter card">
-            <input
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            <select
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
               value={form.twitter.card}
-              onChange={e => setForm(s => ({ ...s, twitter: { ...s.twitter, card: e.target.value } }))}
-            />
+              onChange={e =>
+                setForm(s => ({
+                  ...s,
+                  twitter: { ...s.twitter, card: e.target.value as TwitterCard },
+                }))
+              }
+            >
+              {TWITTER_CARDS.map(c => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
           </Field>
 
           <Field label="Robots index">
             <select
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
               value={form.robots.index ? "true" : "false"}
-              onChange={e => setForm(s => ({ ...s, robots: { ...s.robots, index: e.target.value === "true" } }))}
+              onChange={e =>
+                setForm(s => ({
+                  ...s,
+                  robots: { ...s.robots, index: e.target.value === "true" },
+                }))
+              }
             >
               <option value="true">true</option>
               <option value="false">false</option>
@@ -119,7 +174,12 @@ export default function SeoForm({ initial }: { initial: Seo }) {
             <select
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
               value={form.robots.follow ? "true" : "false"}
-              onChange={e => setForm(s => ({ ...s, robots: { ...s.robots, follow: e.target.value === "true" } }))}
+              onChange={e =>
+                setForm(s => ({
+                  ...s,
+                  robots: { ...s.robots, follow: e.target.value === "true" },
+                }))
+              }
             >
               <option value="true">true</option>
               <option value="false">false</option>

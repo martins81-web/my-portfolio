@@ -2,38 +2,14 @@
 
 import { useMemo, useState } from "react"
 import { saveContent } from "./saveContent"
-
-type AboutJson = {
-  aboutMeta: {
-    title: string
-    description: string
-  }
-  aboutProfile: {
-    name: string
-    headline: string
-    location: string
-    email: string
-    summary: string
-  }
-  aboutProof: Array<{ label: string; value: string }>
-  aboutTimeline: Array<{
-    period: string
-    title: string
-    org: string
-    bullets: string[]
-  }>
-  aboutSkills: Array<{
-    title: string
-    items: string[]
-  }>
-}
+import type { AboutContent } from "@/types/about"
 
 const emptyProof = () => ({ label: "", value: "" })
 const emptyTimeline = () => ({ period: "", title: "", org: "", bullets: [""] })
 const emptySkillGroup = () => ({ title: "", items: [""] })
 
-export default function AboutForm({ initial }: { initial: AboutJson }) {
-  const [form, setForm] = useState<AboutJson>(initial)
+export default function AboutForm({ initial }: { initial: AboutContent }) {
+  const [form, setForm] = useState<AboutContent>(initial)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState("")
 
@@ -54,16 +30,16 @@ export default function AboutForm({ initial }: { initial: AboutJson }) {
     }
   }
 
-  function updateMeta<K extends keyof AboutJson["aboutMeta"]>(
+  function updateMeta<K extends keyof AboutContent["aboutMeta"]>(
     key: K,
-    value: AboutJson["aboutMeta"][K]
+    value: AboutContent["aboutMeta"][K]
   ) {
     setForm(s => ({ ...s, aboutMeta: { ...s.aboutMeta, [key]: value } }))
   }
 
-  function updateProfile<K extends keyof AboutJson["aboutProfile"]>(
+  function updateProfile<K extends keyof AboutContent["aboutProfile"]>(
     key: K,
-    value: AboutJson["aboutProfile"][K]
+    value: AboutContent["aboutProfile"][K]
   ) {
     setForm(s => ({ ...s, aboutProfile: { ...s.aboutProfile, [key]: value } }))
   }
@@ -83,16 +59,10 @@ export default function AboutForm({ initial }: { initial: AboutJson }) {
     setForm(s => ({ ...s, aboutProof: s.aboutProof.filter((_, idx) => idx !== i) }))
   }
 
-  function updateTimeline(
-    i: number,
-    key: "period" | "title" | "org",
-    value: string
-  ) {
+  function updateTimeline(i: number, key: "period" | "title" | "org", value: string) {
     setForm(s => ({
       ...s,
-      aboutTimeline: s.aboutTimeline.map((t, idx) =>
-        idx === i ? { ...t, [key]: value } : t
-      ),
+      aboutTimeline: s.aboutTimeline.map((t, idx) => (idx === i ? { ...t, [key]: value } : t)),
     }))
   }
 
@@ -101,10 +71,7 @@ export default function AboutForm({ initial }: { initial: AboutJson }) {
       ...s,
       aboutTimeline: s.aboutTimeline.map((t, idx) => {
         if (idx !== i) return t
-        return {
-          ...t,
-          bullets: t.bullets.map((b, bi) => (bi === bIndex ? value : b)),
-        }
+        return { ...t, bullets: t.bullets.map((b, bi) => (bi === bIndex ? value : b)) }
       }),
     }))
   }
@@ -114,10 +81,7 @@ export default function AboutForm({ initial }: { initial: AboutJson }) {
   }
 
   function removeTimeline(i: number) {
-    setForm(s => ({
-      ...s,
-      aboutTimeline: s.aboutTimeline.filter((_, idx) => idx !== i),
-    }))
+    setForm(s => ({ ...s, aboutTimeline: s.aboutTimeline.filter((_, idx) => idx !== i) }))
   }
 
   function addTimelineBullet(i: number) {
@@ -134,7 +98,8 @@ export default function AboutForm({ initial }: { initial: AboutJson }) {
       ...s,
       aboutTimeline: s.aboutTimeline.map((t, idx) => {
         if (idx !== i) return t
-        return { ...t, bullets: t.bullets.filter((_, bi) => bi !== bIndex) }
+        const next = t.bullets.filter((_, bi) => bi !== bIndex)
+        return { ...t, bullets: next.length ? next : [""] }
       }),
     }))
   }
@@ -167,9 +132,7 @@ export default function AboutForm({ initial }: { initial: AboutJson }) {
   function addSkillItem(i: number) {
     setForm(s => ({
       ...s,
-      aboutSkills: s.aboutSkills.map((g, idx) =>
-        idx === i ? { ...g, items: [...g.items, ""] } : g
-      ),
+      aboutSkills: s.aboutSkills.map((g, idx) => (idx === i ? { ...g, items: [...g.items, ""] } : g)),
     }))
   }
 
@@ -178,7 +141,8 @@ export default function AboutForm({ initial }: { initial: AboutJson }) {
       ...s,
       aboutSkills: s.aboutSkills.map((g, idx) => {
         if (idx !== i) return g
-        return { ...g, items: g.items.filter((_, ii) => ii !== itemIndex) }
+        const next = g.items.filter((_, ii) => ii !== itemIndex)
+        return { ...g, items: next.length ? next : [""] }
       }),
     }))
   }
