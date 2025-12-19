@@ -1,8 +1,11 @@
+// app/about/page.tsx
 import Link from "next/link"
-import Image from "next/image"
 import type { Metadata } from "next"
-import { getAbout } from "../../data/about"
-import { getProjectsData } from "../../data/projects"
+import { getAbout } from "@/data/about"
+import { getProjectsData } from "@/data/projects"
+import ProfileImage from "@/components/ProfileImage"
+
+export const dynamic = "force-dynamic"
 
 export async function generateMetadata(): Promise<Metadata> {
   const { aboutMeta } = await getAbout()
@@ -21,13 +24,13 @@ function Badge({ text }: { text: string }) {
 }
 
 export default async function AboutPage() {
-  const [{ aboutProfile, aboutProof, aboutTimeline, aboutSkills }, projectsData] = await Promise.all([
-    getAbout(),
-    getProjectsData(),
-  ])
+  const [{ aboutProfile, aboutProof, aboutTimeline, aboutSkills }, projectsData] = await Promise.all(
+    [getAbout(), getProjectsData()]
+  )
+
+  const bust = Date.now()
 
   const projectCount = projectsData.projects.length
-
   const proof = aboutProof.map(item =>
     item.label === "Projects" ? { ...item, value: String(projectCount) } : item
   )
@@ -80,14 +83,11 @@ export default async function AboutPage() {
           </div>
 
           <div className="w-full max-w-xs overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-            <div className="relative h-[360px] sm:h-[420px]">
-              <Image
-                src="/profile.jpg"
-                alt="Eric Martins"
-                fill
-                sizes="(max-width: 1024px) 320px, 320px"
-                className="object-cover object-[50%_18%]"
-                priority
+            <div className="h-[360px] sm:h-[420px]">
+              <ProfileImage
+                bust={bust}
+                alt={aboutProfile.name}
+                className="h-full w-full object-cover object-[50%_18%]"
               />
             </div>
           </div>
@@ -110,10 +110,7 @@ export default async function AboutPage() {
         <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-end justify-between gap-4">
             <h2 className="text-xl font-semibold text-slate-900">Recent experience</h2>
-            <Link
-              href="/resume"
-              className="text-sm font-medium text-slate-900 hover:underline"
-            >
+            <Link href="/resume" className="text-sm font-medium text-slate-900 hover:underline">
               Full resume
             </Link>
           </div>

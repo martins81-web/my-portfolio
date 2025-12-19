@@ -1,16 +1,18 @@
+// app/resume/download/route.ts
 import { NextResponse } from "next/server"
-import path from "path"
-import { readFile } from "fs/promises"
+import { fetchGithubFile } from "@/lib/githubFile"
+
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 export async function GET() {
-  const filePath = path.join(process.cwd(), "public", "Eric_Martins_CV.pdf")
-  const file = await readFile(filePath)
+  const bytes = await fetchGithubFile("public/Eric_Martins_CV.pdf")
 
-  return new NextResponse(file, {
+  return new NextResponse(bytes, {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": 'attachment; filename="Eric_Martins_CV.pdf"',
-      "Cache-Control": "public, max-age=3600",
+      "Cache-Control": "no-store, max-age=0",
     },
   })
 }

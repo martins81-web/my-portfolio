@@ -1,12 +1,21 @@
-export async function uploadAsset(params: { path: string; file: File; message?: string }) {
+// app/admin/forms/uploadAsset.ts
+export async function uploadAsset(opts: { file: File; path: string; message: string }) {
   const fd = new FormData()
-  fd.append("path", params.path)
-  fd.append("message", params.message || "Update asset")
-  fd.append("file", params.file)
+  fd.append("file", opts.file)
+  fd.append("path", opts.path)
+  fd.append("message", opts.message)
 
-  const res = await fetch("/api/admin/asset", { method: "POST", body: fd })
-  const json = await res.json().catch(() => null)
+  const res = await fetch("/api/admin/asset", {
+    method: "POST",
+    body: fd,
+  })
 
-  if (!res.ok || !json?.ok) throw new Error(json?.error || "Upload failed")
-  return { path: String(json.path), url: String(json.url) }
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || "Upload failed")
+  }
+
+  const json = (await res.json()) as { ok: boolean; error?: string }
+  if (!json.ok) throw new Error(json.error || "Upload failed")
+  return json
 }

@@ -4,14 +4,18 @@ import { useMemo, useState } from "react"
 import { saveContent } from "./saveContent"
 import type { SiteContent } from "@/types/site"
 
-export default function SiteForm({ initial }: { initial: SiteContent }) {
+export default function SiteForm({
+  initial,
+  onUpdate,
+}: {
+  initial: SiteContent
+  onUpdate?: (next: SiteContent) => void
+}) {
   const [form, setForm] = useState<SiteContent>(initial)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState("")
 
-  const canSave = useMemo(() => {
-    return Boolean(form.name.trim() && form.email.trim())
-  }, [form.name, form.email])
+  const canSave = useMemo(() => Boolean(form.name.trim() && form.email.trim()), [form])
 
   async function onSave() {
     setSaving(true)
@@ -19,6 +23,7 @@ export default function SiteForm({ initial }: { initial: SiteContent }) {
     try {
       await saveContent("site", form)
       setMsg("Saved")
+      onUpdate?.(form)
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Save failed")
     } finally {
@@ -26,64 +31,68 @@ export default function SiteForm({ initial }: { initial: SiteContent }) {
     }
   }
 
+  function update<K extends keyof SiteContent>(key: K, value: SiteContent[K]) {
+    setForm(s => ({ ...s, [key]: value }))
+  }
+
+  function updateSocial(key: "github" | "linkedin", value: string) {
+    setForm(s => ({ ...s, socials: { ...s.socials, [key]: value || undefined } }))
+  }
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-xl font-bold">Site</h2>
-      <p className="mt-1 text-sm text-slate-600">Global settings used across pages.</p>
+      <p className="mt-1 text-sm text-slate-600">Basic site info.</p>
 
       <div className="mt-6 grid gap-5">
-        <Field label="Name">
-          <input
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-            value={form.name}
-            onChange={e => setForm(s => ({ ...s, name: e.target.value }))}
-          />
-        </Field>
-
         <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Name">
+            <input
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              value={form.name}
+              onChange={e => update("name", e.target.value)}
+            />
+          </Field>
+
           <Field label="Email">
             <input
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
               value={form.email}
-              onChange={e => setForm(s => ({ ...s, email: e.target.value }))}
-            />
-          </Field>
-
-          <Field label="Location">
-            <input
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              value={form.location}
-              onChange={e => setForm(s => ({ ...s, location: e.target.value }))}
+              onChange={e => update("email", e.target.value)}
             />
           </Field>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="GitHub URL">
-            <input
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              value={form.socials.github ?? ""}
-              onChange={e =>
-                setForm(s => ({
-                  ...s,
-                  socials: { ...s.socials, github: e.target.value || undefined },
-                }))
-              }
-            />
-          </Field>
+        <Field label="Location">
+          <input
+            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            value={form.location}
+            onChange={e => update("location", e.target.value)}
+          />
+        </Field>
 
-          <Field label="LinkedIn URL">
-            <input
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-              value={form.socials.linkedin ?? ""}
-              onChange={e =>
-                setForm(s => ({
-                  ...s,
-                  socials: { ...s.socials, linkedin: e.target.value || undefined },
-                }))
-              }
-            />
-          </Field>
+        <div className="rounded-xl border border-slate-200 p-4">
+          <p className="text-xs font-semibold text-slate-600">Socials</p>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Field label="GitHub">
+              <input
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                value={form.socials.github || ""}
+                onChange={e => updateSocial("github", e.target.value)}
+                placeholder="https://github.com/..."
+              />
+            </Field>
+
+            <Field label="LinkedIn">
+              <input
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                value={form.socials.linkedin || ""}
+                onChange={e => updateSocial("linkedin", e.target.value)}
+                placeholder="https://linkedin.com/in/..."
+              />
+            </Field>
+          </div>
         </div>
 
         <SaveRow saving={saving} canSave={canSave} msg={msg} onSave={onSave} />

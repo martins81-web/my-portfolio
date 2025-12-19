@@ -1,15 +1,10 @@
 import Link from "next/link"
-import { fetchGithubJson } from "@/lib/content"
-import type { ResumeContent } from "@/types/resume"
-
-export const dynamic = "force-dynamic"
+import ResumePdfFrame from "@/components/ResumePdfFrame"
 
 const skills = ["Next.js", "React", "TypeScript", "Tailwind CSS", "Angular", "REST APIs", "UI Engineering"]
 
-export default async function ResumePage() {
-  const { resumeUrl } = await fetchGithubJson<ResumeContent>({ path: "data/content/resume.json" })
-
-  const hasResume = Boolean(resumeUrl && resumeUrl.trim())
+export default function ResumePage() {
+  const downloadUrl = `/api/asset/resume?download=1&v=${Date.now()}`
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-12">
@@ -21,7 +16,7 @@ export default async function ResumePage() {
 
         <div className="flex flex-wrap gap-3 lg:justify-end">
           <a
-            href="/resume/download"
+            href={downloadUrl}
             className="inline-flex items-center justify-center rounded-md bg-slate-900 px-5 py-2.5 text-white text-sm font-medium hover:bg-slate-700 transition"
           >
             Download PDF
@@ -39,7 +34,7 @@ export default async function ResumePage() {
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="text-lg font-semibold mb-3">Skills snapshot</h2>
         <div className="flex flex-wrap gap-2">
-          {skills.map((s) => (
+          {skills.map(s => (
             <span key={s} className="text-xs rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
               {s}
             </span>
@@ -49,14 +44,10 @@ export default async function ResumePage() {
 
       <section className="rounded-xl border border-slate-200 overflow-hidden shadow-sm bg-white">
         <div className="border-b border-slate-200 px-4 py-3 text-sm text-slate-600">
-          {hasResume ? "resume.pdf" : "Eric_Martins_CV.pdf"}
+          Eric_Martins_CV.pdf
         </div>
 
-        <iframe
-          src={hasResume ? resumeUrl : "/Eric_Martins_CV.pdf"}
-          title="Eric Martins Resume"
-          className="w-full h-[75vh] min-h-[520px]"
-        />
+        <ResumePdfFrame />
       </section>
     </main>
   )

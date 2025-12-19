@@ -1,3 +1,4 @@
+// data/about.ts
 import type { Metadata } from "next"
 import { fetchGithubJson } from "@/lib/content"
 
@@ -18,9 +19,10 @@ export type AboutProfile = {
   location: string
   email: string
   summary: string
+  avatarUrl?: string
 }
 
-type AboutJson = {
+export type AboutJson = {
   aboutMeta: Pick<Metadata, "title" | "description">
   aboutProfile: AboutProfile
   aboutProof: AboutProof[]
@@ -30,7 +32,6 @@ type AboutJson = {
 
 export async function getAbout() {
   return fetchGithubJson<AboutJson>({
-  path: "data/content/about.json",
-})
-
+    path: "data/content/about.json",
+  })
 }

@@ -7,7 +7,13 @@ import type { HomeContent } from "@/types/home"
 const emptyHighlight = () => ({ title: "", description: "" })
 const emptyTestimonial = () => ({ name: "", role: "", quote: "" })
 
-export default function HomeForm({ initial }: { initial: HomeContent }) {
+export default function HomeForm({
+  initial,
+  onUpdate,
+}: {
+  initial: HomeContent
+  onUpdate?: (next: HomeContent) => void
+}) {
   const [form, setForm] = useState<HomeContent>(initial)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState("")
@@ -22,6 +28,7 @@ export default function HomeForm({ initial }: { initial: HomeContent }) {
     try {
       await saveContent("home", form)
       setMsg("Saved")
+      onUpdate?.(form)
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Save failed")
     } finally {

@@ -2,10 +2,9 @@
 
 import { useMemo, useState } from "react"
 import { saveContent } from "./saveContent"
-import type { ProjectContentItem, ProjectsContent, ProjectListKey } from "@/types/projects"
+import type { ProjectsContent, ProjectListKey } from "@/types/projects"
 
-
-const emptyProject = (): ProjectContentItem => ({
+const emptyProject = () => ({
   slug: "",
   title: "",
   description: "",
@@ -17,15 +16,18 @@ const emptyProject = (): ProjectContentItem => ({
   stack: [""],
 })
 
-export default function ProjectsForm({ initial }: { initial: ProjectsContent }) {
+export default function ProjectsForm({
+  initial,
+  onUpdate,
+}: {
+  initial: ProjectsContent
+  onUpdate?: (next: ProjectsContent) => void
+}) {
   const [form, setForm] = useState<ProjectsContent>(initial)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState("")
 
-  const canSave = useMemo(() => {
-    if (!form.projects.length) return true
-    return form.projects.every(p => p.slug.trim() && p.title.trim())
-  }, [form.projects])
+  const canSave = useMemo(() => Boolean(form.projects.length >= 0), [form.projects.length])
 
   async function onSave() {
     setSaving(true)
@@ -33,6 +35,7 @@ export default function ProjectsForm({ initial }: { initial: ProjectsContent }) 
     try {
       await saveContent("projects", form)
       setMsg("Saved")
+      onUpdate?.(form)
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Save failed")
     } finally {
@@ -58,14 +61,49 @@ export default function ProjectsForm({ initial }: { initial: ProjectsContent }) 
     }))
   }
 
-  function updateProjectField<K extends keyof ProjectContentItem>(
+  function updateProjectField(
     i: number,
-    key: K,
-    value: ProjectContentItem[K]
+    key: "slug" | "title" | "description" | "technology" | "problem",
+    value: string
   ) {
     setForm(s => ({
       ...s,
       projects: s.projects.map((p, idx) => (idx === i ? { ...p, [key]: value } : p)),
+    }))
+  }
+
+  function updateProjectList(i: number, key: ProjectListKey, li: number, value: string) {
+    setForm(s => ({
+      ...s,
+      projects: s.projects.map((p, idx) => {
+        if (idx !== i) return p
+        const list = (p[key] || []) as string[]
+        const next = list.map((x, xidx) => (xidx === li ? value : x))
+        return { ...p, [key]: next }
+      }),
+    }))
+  }
+
+  function addProjectListItem(i: number, key: ProjectListKey) {
+    setForm(s => ({
+      ...s,
+      projects: s.projects.map((p, idx) => {
+        if (idx !== i) return p
+        const list = ((p[key] || []) as string[]).slice()
+        list.push("")
+        return { ...p, [key]: list }
+      }),
+    }))
+  }
+
+  function removeProjectListItem(i: number, key: ProjectListKey, li: number) {
+    setForm(s => ({
+      ...s,
+      projects: s.projects.map((p, idx) => {
+        if (idx !== i) return p
+        const list = ((p[key] || []) as string[]).filter((_, xidx) => xidx !== li)
+        return { ...p, [key]: list.length ? list : [""] }
+      }),
     }))
   }
 
@@ -77,50 +115,21 @@ export default function ProjectsForm({ initial }: { initial: ProjectsContent }) 
     setForm(s => ({ ...s, projects: s.projects.filter((_, idx) => idx !== i) }))
   }
 
-  function updateStringList(
-    projectIndex: number,
-    key: ProjectListKey,
-    itemIndex: number,
-    value: string
-  ) {
-    setForm(s => ({
-      ...s,
-      projects: s.projects.map((p, idx) => {
-        if (idx !== projectIndex) return p
-        const list = (p[key] ?? []) as string[]
-        const next = list.map((x, ii) => (ii === itemIndex ? value : x))
-        return { ...p, [key]: next }
-      }),
-    }))
-  }
-
-  function addStringListItem(projectIndex: number, key: ProjectListKey) {
-    setForm(s => ({
-      ...s,
-      projects: s.projects.map((p, idx) => {
-        if (idx !== projectIndex) return p
-        const list = (p[key] ?? []) as string[]
-        return { ...p, [key]: [...list, ""] }
-      }),
-    }))
-  }
-
-  function removeStringListItem(projectIndex: number, key: ProjectListKey, itemIndex: number) {
-    setForm(s => ({
-      ...s,
-      projects: s.projects.map((p, idx) => {
-        if (idx !== projectIndex) return p
-        const list = (p[key] ?? []) as string[]
-        const next = list.filter((_, ii) => ii !== itemIndex)
-        return { ...p, [key]: next.length ? next : [""] }
-      }),
-    }))
-  }
-
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-bold">Projects</h2>
-      <p className="mt-1 text-sm text-slate-600">Projects content.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold">Projects</h2>
+          <p className="mt-1 text-sm text-slate-600">Projects content.</p>
+        </div>
+        <button
+          type="button"
+          onClick={addProject}
+          className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50"
+        >
+          Add project
+        </button>
+      </div>
 
       <div className="mt-6 grid gap-8">
         <section className="grid gap-4">
@@ -142,7 +151,6 @@ export default function ProjectsForm({ initial }: { initial: ProjectsContent }) 
                   className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                   value={t}
                   onChange={e => updateAllowedTech(i, e.target.value)}
-                  placeholder="React"
                 />
                 <button
                   type="button"
@@ -157,133 +165,102 @@ export default function ProjectsForm({ initial }: { initial: ProjectsContent }) 
         </section>
 
         <section className="grid gap-4">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-slate-900">Projects</h3>
-            <button
-              type="button"
-              onClick={addProject}
-              className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50"
-            >
-              Add project
-            </button>
-          </div>
+          <h3 className="text-sm font-semibold text-slate-900">Projects</h3>
 
-          <div className="grid gap-5">
-            {form.projects.map((p, i) => {
-              const techOptions = form.allowedTechnologies.map(x => x.trim()).filter(Boolean)
-
-              const currentTech = p.technology.trim()
-              const selectOptions =
-                currentTech && !techOptions.includes(currentTech)
-                  ? [currentTech, ...techOptions]
-                  : techOptions
-
-              return (
-                <div key={i} className="rounded-2xl border border-slate-200 p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold text-slate-600">Project {i + 1}</p>
-                      <p className="mt-1 text-sm text-slate-700">Slug and title are required</p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => removeProject(i)}
-                      className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50"
-                    >
-                      Remove
-                    </button>
-                  </div>
-
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                    <Field label="Slug">
-                      <input
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                        value={p.slug}
-                        onChange={e => updateProjectField(i, "slug", e.target.value)}
-                        placeholder="react-admin-dashboard"
-                      />
-                    </Field>
-
-                    <Field label="Technology">
-                      <select
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                        value={p.technology}
-                        onChange={e => updateProjectField(i, "technology", e.target.value)}
-                      >
-                        <option value="">Select</option>
-                        {selectOptions.map(opt => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                  </div>
-
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <Field label="Title">
-                      <input
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                        value={p.title}
-                        onChange={e => updateProjectField(i, "title", e.target.value)}
-                      />
-                    </Field>
-
-                    <Field label="Description">
-                      <input
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                        value={p.description}
-                        onChange={e => updateProjectField(i, "description", e.target.value)}
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="mt-4">
-                    <Field label="Problem">
-                      <textarea
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                        rows={3}
-                        value={p.problem}
-                        onChange={e => updateProjectField(i, "problem", e.target.value)}
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                    <ListEditor
-                      title="Features"
-                      items={p.features}
-                      onAdd={() => addStringListItem(i, "features")}
-                      onChange={(ii, v) => updateStringList(i, "features", ii, v)}
-                      onRemove={ii => removeStringListItem(i, "features", ii)}
-                    />
-                    <ListEditor
-                      title="Challenges"
-                      items={p.challenges}
-                      onAdd={() => addStringListItem(i, "challenges")}
-                      onChange={(ii, v) => updateStringList(i, "challenges", ii, v)}
-                      onRemove={ii => removeStringListItem(i, "challenges", ii)}
-                    />
-                    <ListEditor
-                      title="Learnings"
-                      items={p.learnings}
-                      onAdd={() => addStringListItem(i, "learnings")}
-                      onChange={(ii, v) => updateStringList(i, "learnings", ii, v)}
-                      onRemove={ii => removeStringListItem(i, "learnings", ii)}
-                    />
-                    <ListEditor
-                      title="Stack"
-                      items={p.stack ?? [""]}
-                      onAdd={() => addStringListItem(i, "stack")}
-                      onChange={(ii, v) => updateStringList(i, "stack", ii, v)}
-                      onRemove={ii => removeStringListItem(i, "stack", ii)}
-                      placeholder="TypeScript"
-                    />
-                  </div>
+          <div className="grid gap-6">
+            {form.projects.map((p, i) => (
+              <div key={i} className="rounded-2xl border border-slate-200 p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-xs font-semibold text-slate-600">Project {i + 1}</div>
+                  <button
+                    type="button"
+                    onClick={() => removeProject(i)}
+                    className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                  >
+                    Remove
+                  </button>
                 </div>
-              )
-            })}
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <Field label="Slug">
+                    <input
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                      value={p.slug}
+                      onChange={e => updateProjectField(i, "slug", e.target.value)}
+                      placeholder="my-project"
+                    />
+                  </Field>
+
+                  <Field label="Technology">
+                    <input
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                      value={p.technology}
+                      onChange={e => updateProjectField(i, "technology", e.target.value)}
+                      placeholder="Next.js"
+                    />
+                  </Field>
+
+                  <Field label="Title">
+                    <input
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                      value={p.title}
+                      onChange={e => updateProjectField(i, "title", e.target.value)}
+                    />
+                  </Field>
+
+                  <Field label="Description">
+                    <input
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                      value={p.description}
+                      onChange={e => updateProjectField(i, "description", e.target.value)}
+                    />
+                  </Field>
+                </div>
+
+                <div className="mt-4">
+                  <Field label="Problem">
+                    <textarea
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                      rows={3}
+                      value={p.problem}
+                      onChange={e => updateProjectField(i, "problem", e.target.value)}
+                    />
+                  </Field>
+                </div>
+
+                <ProjectList
+                  title="Features"
+                  items={p.features}
+                  onAdd={() => addProjectListItem(i, "features")}
+                  onChange={(li, v) => updateProjectList(i, "features", li, v)}
+                  onRemove={li => removeProjectListItem(i, "features", li)}
+                />
+
+                <ProjectList
+                  title="Challenges"
+                  items={p.challenges}
+                  onAdd={() => addProjectListItem(i, "challenges")}
+                  onChange={(li, v) => updateProjectList(i, "challenges", li, v)}
+                  onRemove={li => removeProjectListItem(i, "challenges", li)}
+                />
+
+                <ProjectList
+                  title="Learnings"
+                  items={p.learnings}
+                  onAdd={() => addProjectListItem(i, "learnings")}
+                  onChange={(li, v) => updateProjectList(i, "learnings", li, v)}
+                  onRemove={li => removeProjectListItem(i, "learnings", li)}
+                />
+
+                <ProjectList
+                  title="Stack"
+                  items={p.stack || [""]}
+                  onAdd={() => addProjectListItem(i, "stack")}
+                  onChange={(li, v) => updateProjectList(i, "stack", li, v)}
+                  onRemove={li => removeProjectListItem(i, "stack", li)}
+                />
+              </div>
+            ))}
           </div>
         </section>
 
@@ -302,42 +279,39 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function ListEditor({
+function ProjectList({
   title,
   items,
   onAdd,
   onChange,
   onRemove,
-  placeholder,
 }: {
   title: string
   items: string[]
   onAdd: () => void
-  onChange: (index: number, value: string) => void
-  onRemove: (index: number) => void
-  placeholder?: string
+  onChange: (i: number, value: string) => void
+  onRemove: (i: number) => void
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 p-4">
+    <div className="mt-6 grid gap-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-semibold text-slate-600">{title}</p>
+        <p className="text-sm font-semibold text-slate-900">{title}</p>
         <button
           type="button"
           onClick={onAdd}
-          className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold hover:bg-slate-50"
+          className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50"
         >
           Add
         </button>
       </div>
 
-      <div className="mt-3 grid gap-3">
+      <div className="grid gap-3">
         {items.map((x, i) => (
           <div key={i} className="flex gap-3">
             <input
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
               value={x}
               onChange={e => onChange(i, e.target.value)}
-              placeholder={placeholder}
             />
             <button
               type="button"

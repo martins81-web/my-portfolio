@@ -1,112 +1,93 @@
+// app/api/admin/asset/route.ts
 import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
-function getGithubConfig() {
-  const owner = process.env.GITHUB_OWNER
-  const repo = process.env.GITHUB_REPO
-  const branch = process.env.GITHUB_BRANCH ?? "main"
-  const token = process.env.GITHUB_TOKEN
-
-  if (!owner || !repo || !token) throw new Error("Missing GITHUB_OWNER or GITHUB_REPO or GITHUB_TOKEN")
-  return { owner, repo, branch, token }
+function env(name: string) {
+  const v = process.env[name]
+  return v && v.trim() ? v.trim() : ""
 }
 
-async function githubGetSha(params: { owner: string; repo: string; branch: string; token: string; path: string }) {
-  const url = `https://api.github.com/repos/${params.owner}/${params.repo}/contents/${params.path}?ref=${params.branch}`
-
-  const res = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${params.token}`,
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-    cache: "no-store",
-  })
-
-  if (res.status === 404) return null
-  if (!res.ok) throw new Error(`GitHub GET failed ${res.status}`)
-
-  const json = await res.json()
-  return (json && json.sha) || null
-}
-
-async function githubPutFile(params: {
+async function getExistingSha(opts: {
   owner: string
   repo: string
   branch: string
   token: string
   path: string
-  message: string
-  contentBase64: string
-  sha?: string | null
-}) {
-  const url = `https://api.github.com/repos/${params.owner}/${params.repo}/contents/${params.path}`
-
-  const body: any = {
-    message: params.message,
-    content: params.contentBase64,
-    branch: params.branch,
-  }
-
-  if (params.sha) body.sha = params.sha
-
+}): Promise<string | null> {
+  const url = `https://api.github.com/repos/${opts.owner}/${opts.repo}/contents/${opts.path}?ref=${opts.branch}`
   const res = await fetch(url, {
-    method: "PUT",
     headers: {
       Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${params.token}`,
-      "Content-Type": "application/json",
-      "X-GitHub-Api-Version": "2022-11-28",
+      Authorization: `Bearer ${opts.token}`,
     },
-    body: JSON.stringify(body),
+    cache: "no-store",
   })
 
+  if (res.status === 404) return null
   if (!res.ok) {
-    const txt = await res.text().catch(() => "")
-    throw new Error(`GitHub PUT failed ${res.status} ${txt}`)
+    const text = await res.text()
+    throw new Error(`GitHub sha fetch failed: ${res.status} ${text}`)
   }
 
-  return res.json()
+  const json = (await res.json()) as { sha?: string }
+  return json.sha ?? null
 }
 
 export async function POST(req: Request) {
   try {
-    const form = await req.formData()
+    const owner = env("GITHUB_OWNER") || env("GITHUB_CONTENT_OWNER")
+    const repo = env("GITHUB_REPO") || env("GITHUB_CONTENT_REPO")
+    const branch = env("GITHUB_BRANCH") || env("GITHUB_CONTENT_BRANCH") || "main"
+    const token = env("GITHUB_TOKEN") || env("GITHUB_CONTENT_TOKEN")
 
-    const file = form.get("file")
-    const path = String(form.get("path") || "")
-    const message = String(form.get("message") || "Update asset")
+    if (!owner || !repo || !token) {
+      return NextResponse.json({ ok: false, error: "Missing GitHub env vars" }, { status: 500 })
+    }
 
-    if (!file || !(file instanceof File)) {
+    const fd = await req.formData()
+    const file = fd.get("file")
+    const path = String(fd.get("path") || "")
+    const message = String(fd.get("message") || "Update asset")
+
+    if (!(file instanceof File)) {
       return NextResponse.json({ ok: false, error: "Missing file" }, { status: 400 })
     }
 
-    if (!path) {
-      return NextResponse.json({ ok: false, error: "Missing path" }, { status: 400 })
+    const allowed = new Set(["public/profile.jpg", "public/Eric_Martins_CV.pdf"])
+    if (!allowed.has(path)) {
+      return NextResponse.json({ ok: false, error: "Path not allowed" }, { status: 400 })
     }
 
-    const { owner, repo, branch, token } = getGithubConfig()
-
     const ab = await file.arrayBuffer()
-    const contentBase64 = Buffer.from(ab).toString("base64")
+    const content = Buffer.from(ab).toString("base64")
 
-    const sha = await githubGetSha({ owner, repo, branch, token, path })
+    const sha = await getExistingSha({ owner, repo, branch, token, path })
 
-    await githubPutFile({
-      owner,
-      repo,
-      branch,
-      token,
-      path,
-      message,
-      contentBase64,
-      sha,
+    const putUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`
+    const putRes = await fetch(putUrl, {
+      method: "PUT",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        message,
+        content,
+        branch,
+        ...(sha ? { sha } : {}),
+      }),
     })
 
-    const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}?v=${Date.now()}`
-    return NextResponse.json({ ok: true, path, url })
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message || "Upload failed" }, { status: 500 })
+    if (!putRes.ok) {
+      const text = await putRes.text()
+      return NextResponse.json({ ok: false, error: text }, { status: 500 })
+    }
+
+    return NextResponse.json({ ok: true, path })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Upload failed"
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 })
   }
 }

@@ -1,11 +1,8 @@
-// lib/content.ts
-type GithubJsonOpts = {
-  path: string
-}
-
+// lib/githubFile.ts
 type GithubContentsResponse = {
   content: string
   encoding: "base64" | string
+  sha?: string
 }
 
 function env(name: string) {
@@ -13,7 +10,7 @@ function env(name: string) {
   return v && v.trim() ? v.trim() : ""
 }
 
-export async function fetchGithubJson<T>({ path }: GithubJsonOpts): Promise<T> {
+export async function fetchGithubFile(path: string): Promise<ArrayBuffer> {
   const owner = env("GITHUB_OWNER") || env("GITHUB_CONTENT_OWNER")
   const repo = env("GITHUB_REPO") || env("GITHUB_CONTENT_REPO")
   const branch = env("GITHUB_BRANCH") || env("GITHUB_CONTENT_BRANCH") || "main"
@@ -33,10 +30,15 @@ export async function fetchGithubJson<T>({ path }: GithubJsonOpts): Promise<T> {
 
   if (!res.ok) {
     const text = await res.text()
-    throw new Error(`GitHub fetch failed for ${path}: ${res.status} ${text}`)
+    throw new Error(`GitHub file fetch failed for ${path}: ${res.status} ${text}`)
   }
 
   const json = (await res.json()) as GithubContentsResponse
-  const decoded = Buffer.from(json.content, "base64").toString("utf8")
-  return JSON.parse(decoded) as T
+  if (!json.content || json.encoding !== "base64") {
+    throw new Error(`Unexpected GitHub contents payload for ${path}`)
+  }
+
+  const buf = Buffer.from(json.content, "base64")
+  const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer
+  return ab
 }
