@@ -14,7 +14,7 @@
   ],
   "projects": [
     {
-      "slug": "react-admin-dashboard",
+      "slug": "react-admin-dashboa",
       "title": "Smart Admin Dashboard App",
       "description": "Admin dashboard with charts, tables and API integration.",
       "technology": "React",
