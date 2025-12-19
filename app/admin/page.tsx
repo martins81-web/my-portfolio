@@ -1,30 +1,85 @@
-import Link from "next/link"
+import { fetchGithubJson } from "@/lib/content"
+import AdminDashboard from "./AdminDashboard"
 
-const items = [
-  { key: "site", label: "Site", href: "/admin/site" },
-  { key: "home", label: "Home", href: "/admin/home" },
-  { key: "about", label: "About", href: "/admin/about" },
-  { key: "projects", label: "Projects", href: "/admin/projects" },
-  { key: "seo", label: "SEO", href: "/admin/seo" },
-]
+export const dynamic = "force-dynamic"
 
-export default function AdminIndexPage() {
+type SiteJson = {
+  name: string
+  email: string
+  location: string
+  socials: { github?: string; linkedin?: string }
+}
+
+type SeoJson = {
+  siteName: string
+  defaultTitle: string
+  titleTemplate: string
+  description: string
+  openGraph: { type: string; url: string }
+  twitter: { card: string }
+  robots: { index: boolean; follow: boolean }
+}
+
+type HomeJson = {
+  homeHero: {
+    title: string
+    subtitle: string
+    description: string
+    primaryCta: { label: string; href: string }
+    secondaryCta: { label: string; href: string }
+  }
+  homeHighlights: { title: string; description: string }[]
+  featuredProjectSlugs: string[]
+  testimonials: { name: string; role: string; quote: string }[]
+}
+
+type AboutJson = {
+  aboutMeta: { title: string; description: string }
+  aboutProfile: {
+    name: string
+    headline: string
+    location: string
+    email: string
+    summary: string
+  }
+  aboutProof: { label: string; value: string }[]
+  aboutTimeline: { period: string; title: string; org: string; bullets: string[] }[]
+  aboutSkills: { title: string; items: string[] }[]
+}
+
+type ProjectsJson = {
+  allowedTechnologies: string[]
+  projects: Array<{
+    slug: string
+    title: string
+    description: string
+    technology: string
+    problem: string
+    features: string[]
+    challenges: string[]
+    learnings: string[]
+    stack?: string[]
+  }>
+}
+
+export default async function AdminPage() {
+  const [site, seo, home, about, projects] = await Promise.all([
+    fetchGithubJson<SiteJson>({ path: "data/content/site.json" }),
+    fetchGithubJson<SeoJson>({ path: "data/content/seo.json" }),
+    fetchGithubJson<HomeJson>({ path: "data/content/home.json" }),
+    fetchGithubJson<AboutJson>({ path: "data/content/about.json" }),
+    fetchGithubJson<ProjectsJson>({ path: "data/content/projects.json" }),
+  ])
+
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-12">
-      <h1 className="text-2xl font-semibold">Admin</h1>
-
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        {items.map(i => (
-          <Link
-            key={i.key}
-            href={i.href}
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:bg-slate-50"
-          >
-            <div className="text-sm text-slate-600">Edit</div>
-            <div className="mt-1 text-lg font-semibold text-slate-900">{i.label}</div>
-          </Link>
-        ))}
-      </div>
-    </main>
+    <AdminDashboard
+      initial={{
+        site,
+        seo,
+        home,
+        about,
+        projects,
+      }}
+    />
   )
 }

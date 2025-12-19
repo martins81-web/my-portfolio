@@ -1,9 +1,5 @@
-import { getSite } from "@/data/site"
-import SiteForm from "./SiteForm"
+import { redirect } from "next/navigation"
 
-export const dynamic = "force-dynamic"
-
-export default async function AdminSitePage() {
-  const site = await getSite()
-  return <SiteForm initial={site} />
+export default function AdminSiteRedirect() {
+  redirect("/admin")
 }
