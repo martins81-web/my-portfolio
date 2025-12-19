@@ -1,9 +1,17 @@
 {
-  "siteName": "Eric Martins",
+  "siteName": "Eric Martinsdd",
   "defaultTitle": "Eric Martins | Front-End & API Developer",
   "titleTemplate": "%s | Eric Martins",
   "description": "Front-End and API Developer specialized in React, Angular, Next.js and API integration.",
-  "openGraph": { "type": "website", "url": "/" },
-  "twitter": { "card": "summary_large_image" },
-  "robots": { "index": true, "follow": true }
+  "openGraph": {
+    "type": "website",
+    "url": "/"
+  },
+  "twitter": {
+    "card": "summary_large_image"
+  },
+  "robots": {
+    "index": true,
+    "follow": true
+  }
 }
