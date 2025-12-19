@@ -2,16 +2,13 @@ import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
-const ALLOWED_KEYS = ["site", "seo", "home", "about", "projects", "resume"] as const
-type ContentKey = (typeof ALLOWED_KEYS)[number]
-
 function getGithubConfig() {
   const owner = process.env.GITHUB_OWNER
   const repo = process.env.GITHUB_REPO
   const branch = process.env.GITHUB_BRANCH ?? "main"
   const token = process.env.GITHUB_TOKEN
 
-  if (!owner || !repo || !token) throw new Error("Missing GitHub env vars")
+  if (!owner || !repo || !token) throw new Error("Missing GITHUB_OWNER or GITHUB_REPO or GITHUB_TOKEN")
   return { owner, repo, branch, token }
 }
 
@@ -22,6 +19,7 @@ async function githubGetSha(params: { owner: string; repo: string; branch: strin
     headers: {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${params.token}`,
+      "X-GitHub-Api-Version": "2022-11-28",
     },
     cache: "no-store",
   })
@@ -29,8 +27,8 @@ async function githubGetSha(params: { owner: string; repo: string; branch: strin
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`GitHub GET failed ${res.status}`)
 
-  const json: any = await res.json()
-  return json?.sha ?? null
+  const json = await res.json()
+  return (json && json.sha) || null
 }
 
 async function githubPutFile(params: {
@@ -59,6 +57,7 @@ async function githubPutFile(params: {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${params.token}`,
       "Content-Type": "application/json",
+      "X-GitHub-Api-Version": "2022-11-28",
     },
     body: JSON.stringify(body),
   })
@@ -73,23 +72,26 @@ async function githubPutFile(params: {
 
 export async function POST(req: Request) {
   try {
-    const { key, data, message } = (await req.json()) as {
-      key?: ContentKey
-      data?: unknown
-      message?: string
+    const form = await req.formData()
+
+    const file = form.get("file")
+    const path = String(form.get("path") || "")
+    const message = String(form.get("message") || "Update asset")
+
+    if (!file || !(file instanceof File)) {
+      return NextResponse.json({ ok: false, error: "Missing file" }, { status: 400 })
     }
 
-    if (!key || !ALLOWED_KEYS.includes(key)) {
-      return NextResponse.json({ ok: false, error: "Invalid key" }, { status: 400 })
+    if (!path) {
+      return NextResponse.json({ ok: false, error: "Missing path" }, { status: 400 })
     }
 
-    const path = `data/content/${key}.json`
     const { owner, repo, branch, token } = getGithubConfig()
 
-    const sha = await githubGetSha({ owner, repo, branch, token, path })
+    const ab = await file.arrayBuffer()
+    const contentBase64 = Buffer.from(ab).toString("base64")
 
-    const jsonText = JSON.stringify(data ?? {}, null, 2) + "\n"
-    const contentBase64 = Buffer.from(jsonText, "utf8").toString("base64")
+    const sha = await githubGetSha({ owner, repo, branch, token, path })
 
     await githubPutFile({
       owner,
@@ -97,13 +99,14 @@ export async function POST(req: Request) {
       branch,
       token,
       path,
-      message: message || `Update ${key}`,
+      message,
       contentBase64,
       sha,
     })
 
-    return NextResponse.json({ ok: true })
+    const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}?v=${Date.now()}`
+    return NextResponse.json({ ok: true, path, url })
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message || "Save failed" }, { status: 500 })
+    return NextResponse.json({ ok: false, error: e?.message || "Upload failed" }, { status: 500 })
   }
 }

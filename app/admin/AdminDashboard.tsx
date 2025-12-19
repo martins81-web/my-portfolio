@@ -1,79 +1,54 @@
 "use client"
 
 import { useMemo, useState } from "react"
+
+import ProjectsForm from "./forms/ProjectsForm"
+import AboutForm from "./forms/AboutForm"
+import HomeForm from "./forms/HomeForm"
 import SiteForm from "./forms/SiteForm"
 import SeoForm from "./forms/SeoForm"
-import HomeForm from "./forms/HomeForm"
-import AboutForm from "./forms/AboutForm"
-import ProjectsForm from "./forms/ProjectsForm"
+import ResumeForm from "./forms/ResumeForm"
 
+type TabKey = "projects" | "about" | "home" | "site" | "seo" | "resume"
 
+export default function AdminDashboard(props: {
+  initial: {
+    site: any
+    seo: any
+    home: any
+    about: any
+    projects: any
+    resume: { resumeUrl: string }
+  }
+}) {
+  const [tab, setTab] = useState<TabKey>("projects")
 
-type AdminInitial = {
-  site: any
-  seo: any
-  home: any
-  about: any
-  projects: any
-}
-
-type TabKey = "site" | "seo" | "home" | "about" | "projects"
-
-export default function AdminDashboard({ initial }: { initial: AdminInitial }) {
-  const [active, setActive] = useState<TabKey>("projects")
-
-  const tabs = useMemo(
-    () =>
-      [
-        { key: "projects" as const, label: "Projects" },
-        { key: "about" as const, label: "About" },
-        { key: "home" as const, label: "Home" },
-        { key: "site" as const, label: "Site" },
-        { key: "seo" as const, label: "SEO" },
-      ] as const,
-    []
-  )
+  const content = useMemo(() => {
+    if (tab === "projects") return <ProjectsForm initial={props.initial.projects} />
+    if (tab === "about") return <AboutForm initial={props.initial.about} />
+    if (tab === "home") return <HomeForm initial={props.initial.home} />
+    if (tab === "site") return <SiteForm initial={props.initial.site} />
+    if (tab === "seo") return <SeoForm initial={props.initial.seo} />
+    return <ResumeForm initial={props.initial.resume} />
+  }, [tab, props.initial])
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Admin</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Edit content using forms. Saves to GitHub.
-        </p>
+    <div style={{ display: "flex", gap: 16 }}>
+      <div style={{ width: 240 }}>
+        <h1 style={{ marginTop: 0 }}>Admin</h1>
+        <div style={{ opacity: 0.8, marginBottom: 12 }}>Edit content using forms. Saves to GitHub.</div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <button onClick={() => setTab("projects")}>Projects</button>
+          <button onClick={() => setTab("about")}>About</button>
+          <button onClick={() => setTab("home")}>Home</button>
+          <button onClick={() => setTab("site")}>Site</button>
+          <button onClick={() => setTab("seo")}>SEO</button>
+          <button onClick={() => setTab("resume")}>Resume</button>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-        <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <nav className="flex flex-col gap-1">
-            {tabs.map(t => {
-              const on = t.key === active
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => setActive(t.key)}
-                  className={[
-                    "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold transition",
-                    on
-                      ? "bg-slate-900 text-white"
-                      : "text-slate-800 hover:bg-slate-50",
-                  ].join(" ")}
-                >
-                  {t.label}
-                </button>
-              )
-            })}
-          </nav>
-        </aside>
-
-        <section className="min-w-0">
-          {active === "site" ? <SiteForm initial={initial.site} /> : null}
-          {active === "seo" ? <SeoForm initial={initial.seo} /> : null}
-          {active === "home" ? <HomeForm initial={initial.home} /> : null}
-          {active === "about" ? <AboutForm initial={initial.about} /> : null}
-          {active === "projects" ? <ProjectsForm initial={initial.projects} /> : null}
-        </section>
-      </div>
-    </main>
+      <div style={{ flex: 1 }}>{content}</div>
+    </div>
   )
 }

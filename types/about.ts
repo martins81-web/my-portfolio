@@ -6,6 +6,7 @@ export type AboutContent = {
     location: string
     email: string
     summary: string
+    avatarUrl?: string
   }
   aboutProof: Array<{ label: string; value: string }>
   aboutTimeline: Array<{

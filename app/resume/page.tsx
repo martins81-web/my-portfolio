@@ -1,24 +1,22 @@
 import Link from "next/link"
+import { fetchGithubJson } from "@/lib/content"
+import type { ResumeContent } from "@/types/resume"
 
-const skills = [
-  "Next.js",
-  "React",
-  "TypeScript",
-  "Tailwind CSS",
-  "Angular",
-  "REST APIs",
-  "UI Engineering",
-]
+export const dynamic = "force-dynamic"
 
-export default function ResumePage() {
+const skills = ["Next.js", "React", "TypeScript", "Tailwind CSS", "Angular", "REST APIs", "UI Engineering"]
+
+export default async function ResumePage() {
+  const { resumeUrl } = await fetchGithubJson<ResumeContent>({ path: "data/content/resume.json" })
+
+  const hasResume = Boolean(resumeUrl && resumeUrl.trim())
+
   return (
     <main className="max-w-6xl mx-auto px-6 py-12">
       <header className="mb-8 grid gap-6 lg:grid-cols-3 lg:items-end">
         <div className="lg:col-span-2">
           <h1 className="text-3xl font-bold mb-2">Resume</h1>
-          <p className="text-slate-600 max-w-2xl">
-            View my resume below or download the PDF version.
-          </p>
+          <p className="text-slate-600 max-w-2xl">View my resume below or download the PDF version.</p>
         </div>
 
         <div className="flex flex-wrap gap-3 lg:justify-end">
@@ -41,11 +39,8 @@ export default function ResumePage() {
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="text-lg font-semibold mb-3">Skills snapshot</h2>
         <div className="flex flex-wrap gap-2">
-          {skills.map(s => (
-            <span
-              key={s}
-              className="text-xs rounded-full bg-slate-100 px-2.5 py-1 text-slate-700"
-            >
+          {skills.map((s) => (
+            <span key={s} className="text-xs rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
               {s}
             </span>
           ))}
@@ -54,11 +49,11 @@ export default function ResumePage() {
 
       <section className="rounded-xl border border-slate-200 overflow-hidden shadow-sm bg-white">
         <div className="border-b border-slate-200 px-4 py-3 text-sm text-slate-600">
-          Eric_Martins_CV.pdf
+          {hasResume ? "resume.pdf" : "Eric_Martins_CV.pdf"}
         </div>
 
         <iframe
-          src="/Eric_Martins_CV.pdf"
+          src={hasResume ? resumeUrl : "/Eric_Martins_CV.pdf"}
           title="Eric Martins Resume"
           className="w-full h-[75vh] min-h-[520px]"
         />
