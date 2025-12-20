@@ -1,6 +1,12 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
+import type { SiteContent } from "@/types/site"
+import type { SeoContent } from "@/types/seo"
+import type { HomeContent } from "@/types/home"
+import type { AboutContent } from "@/types/about"
+import type { ProjectsContent } from "@/types/projects"
+import type { ResumeContent } from "@/types/resume"
 
 import ProjectsForm from "./forms/ProjectsForm"
 import AboutForm from "./forms/AboutForm"
@@ -13,15 +19,34 @@ type TabKey = "projects" | "about" | "home" | "site" | "seo" | "resume"
 
 export default function AdminDashboard(props: {
   initial: {
-    site: any
-    seo: any
-    home: any
-    about: any
-    projects: any
-    resume: { resumeUrl: string }
+    site: SiteContent
+    seo: SeoContent
+    home: HomeContent
+    about: AboutContent
+    projects: ProjectsContent
+    resume: ResumeContent
   }
 }) {
   const [tab, setTab] = useState<TabKey>("projects")
+
+  useEffect(() => {
+    function onPageShow(e: PageTransitionEvent) {
+      if (e.persisted) window.location.reload()
+    }
+
+    function onPopState() {
+      // sometimes popstate is used for back/forward navigation; reload to ensure fresh data
+      window.location.reload()
+    }
+
+    window.addEventListener("pageshow", onPageShow as EventListener)
+    window.addEventListener("popstate", onPopState)
+
+    return () => {
+      window.removeEventListener("pageshow", onPageShow as EventListener)
+      window.removeEventListener("popstate", onPopState)
+    }
+  }, [])
 
   const content = useMemo(() => {
     if (tab === "projects") return <ProjectsForm initial={props.initial.projects} />
@@ -33,22 +58,57 @@ export default function AdminDashboard(props: {
   }, [tab, props.initial])
 
   return (
-    <div style={{ display: "flex", gap: 16 }}>
-      <div style={{ width: 240 }}>
-        <h1 style={{ marginTop: 0 }}>Admin</h1>
-        <div style={{ opacity: 0.8, marginBottom: 12 }}>Edit content using forms. Saves to GitHub.</div>
+    <div className="flex gap-6">
+      <aside className="w-60">
+        <h1 className="mt-0 text-2xl font-bold">Admin</h1>
+        <div className="opacity-80 mb-3 text-sm">Edit content using forms. Saves to GitHub.</div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <button onClick={() => setTab("projects")}>Projects</button>
-          <button onClick={() => setTab("about")}>About</button>
-          <button onClick={() => setTab("home")}>Home</button>
-          <button onClick={() => setTab("site")}>Site</button>
-          <button onClick={() => setTab("seo")}>SEO</button>
-          <button onClick={() => setTab("resume")}>Resume</button>
-        </div>
-      </div>
+        <nav className="flex flex-col gap-2">
+          <button
+            className={`w-full text-left rounded-xl px-3 py-2 text-sm font-semibold ${tab === "projects" ? "bg-slate-900 text-white" : "text-slate-900 hover:bg-slate-50"}`}
+            onClick={() => setTab("projects")}
+          >
+            Projects
+          </button>
 
-      <div style={{ flex: 1 }}>{content}</div>
+          <button
+            className={`w-full text-left rounded-xl px-3 py-2 text-sm font-semibold ${tab === "about" ? "bg-slate-900 text-white" : "text-slate-900 hover:bg-slate-50"}`}
+            onClick={() => setTab("about")}
+          >
+            About
+          </button>
+
+          <button
+            className={`w-full text-left rounded-xl px-3 py-2 text-sm font-semibold ${tab === "home" ? "bg-slate-900 text-white" : "text-slate-900 hover:bg-slate-50"}`}
+            onClick={() => setTab("home")}
+          >
+            Home
+          </button>
+
+          <button
+            className={`w-full text-left rounded-xl px-3 py-2 text-sm font-semibold ${tab === "site" ? "bg-slate-900 text-white" : "text-slate-900 hover:bg-slate-50"}`}
+            onClick={() => setTab("site")}
+          >
+            Site
+          </button>
+
+          <button
+            className={`w-full text-left rounded-xl px-3 py-2 text-sm font-semibold ${tab === "seo" ? "bg-slate-900 text-white" : "text-slate-900 hover:bg-slate-50"}`}
+            onClick={() => setTab("seo")}
+          >
+            SEO
+          </button>
+
+          <button
+            className={`w-full text-left rounded-xl px-3 py-2 text-sm font-semibold ${tab === "resume" ? "bg-slate-900 text-white" : "text-slate-900 hover:bg-slate-50"}`}
+            onClick={() => setTab("resume")}
+          >
+            Resume
+          </button>
+        </nav>
+      </aside>
+
+      <main className="flex-1">{content}</main>
     </div>
   )
 }

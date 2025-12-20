@@ -81,14 +81,26 @@ export default async function AboutPage() {
 
           <div className="w-full max-w-xs overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
             <div className="relative h-[360px] sm:h-[420px]">
-              <Image
-                src="/profile.jpg"
-                alt="Eric Martins"
-                fill
-                sizes="(max-width: 1024px) 320px, 320px"
-                className="object-cover object-[50%_18%]"
-                priority
-              />
+              {aboutProfile?.avatarUrl ? (
+                <Image
+                  src={`${aboutProfile.avatarUrl}${aboutProfile.avatarUrl.includes("?") ? "&" : "?"}t=${Date.now()}`}
+                  alt="Eric Martins"
+                  fill
+                  sizes="(max-width: 1024px) 320px, 320px"
+                  className="object-cover object-[50%_18%]"
+                  priority
+                  unoptimized
+                />
+              ) : (
+                <Image
+                  src="/profile.jpg"
+                  alt="Eric Martins"
+                  fill
+                  sizes="(max-width: 1024px) 320px, 320px"
+                  className="object-cover object-[50%_18%]"
+                  priority
+                />
+              )}
             </div>
           </div>
         </div>

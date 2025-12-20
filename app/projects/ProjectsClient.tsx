@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import ProjectCard from "../../components/ProjectCard"
 import type { Project } from "@/data/projects"
@@ -27,34 +27,20 @@ export default function ProjectsClient({ projects, allowedTechnologies }: Props)
     return ["All", ...list]
   }, [allowedTechnologies, projects])
 
-  const initial = searchParams.get("tech")
-  const [filter, setFilter] = useState<string>(() => {
-    if (initial === "All") return "All"
-    if (isAllowedTech(initial, techList)) return initial as string
-    return "All"
-  })
-
-  useEffect(() => {
+  const filter = useMemo(() => {
     const current = searchParams.get("tech")
-    if (current === null) {
-      setFilter("All")
-      return
-    }
-    if (current === "All") {
-      setFilter("All")
-      return
-    }
-    if (isAllowedTech(current, techList)) setFilter(current)
-    else setFilter("All")
+    if (current === "All" || current === null) return "All"
+    if (isAllowedTech(current, techList)) return current as string
+    return "All"
   }, [searchParams, techList])
+
+
 
   const filteredProjects = useMemo(() => {
     return filter === "All" ? projects : projects.filter(p => p.technology === filter)
   }, [filter, projects])
 
   function setTech(next: string) {
-    setFilter(next)
-
     const params = new URLSearchParams(searchParams.toString())
     if (next === "All") params.delete("tech")
     else params.set("tech", next)

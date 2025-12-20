@@ -27,7 +27,8 @@ async function githubGetSha(params: { owner: string; repo: string; branch: strin
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`GitHub GET failed ${res.status}`)
 
-  const json = await res.json()
+  type GithubShaResp = { sha?: string }
+  const json = (await res.json().catch(() => null)) as GithubShaResp | null
   return (json && json.sha) || null
 }
 
@@ -43,13 +44,13 @@ async function githubPutFile(params: {
 }) {
   const url = `https://api.github.com/repos/${params.owner}/${params.repo}/contents/${params.path}`
 
-  const body: any = {
+  const body: Record<string, unknown> = {
     message: params.message,
     content: params.contentBase64,
     branch: params.branch,
   }
 
-  if (params.sha) body.sha = params.sha
+  if (params.sha) (body as Record<string, unknown>).sha = params.sha
 
   const res = await fetch(url, {
     method: "PUT",
@@ -106,7 +107,8 @@ export async function POST(req: Request) {
 
     const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}?v=${Date.now()}`
     return NextResponse.json({ ok: true, path, url })
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message || "Upload failed" }, { status: 500 })
+  } catch (e: unknown) {
+    const errMsg = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ ok: false, error: errMsg || "Upload failed" }, { status: 500 })
   }
 }

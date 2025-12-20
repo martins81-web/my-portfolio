@@ -11,10 +11,7 @@ const email = "ericmartins81@gmail.com"
 const location = "Québec, Canada"
 
 export default function ContactPage() {
-  const subject = encodeURIComponent("Portfolio inquiry")
-  const body = encodeURIComponent(
-    "Hi Eric,\n\nI saw your portfolio and would like to connect about:\n\n- \n\nThanks,"
-  )
+
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-12">

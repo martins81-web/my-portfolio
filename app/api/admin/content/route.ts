@@ -29,7 +29,8 @@ async function githubGetSha(params: { owner: string; repo: string; branch: strin
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`GitHub GET failed ${res.status}`)
 
-  const json: any = await res.json()
+  type GithubShaResp = { sha?: string }
+  const json = (await res.json().catch(() => null)) as GithubShaResp | null
   return json?.sha ?? null
 }
 
@@ -45,13 +46,13 @@ async function githubPutFile(params: {
 }) {
   const url = `https://api.github.com/repos/${params.owner}/${params.repo}/contents/${params.path}`
 
-  const body: any = {
+  const body: Record<string, unknown> = {
     message: params.message,
     content: params.contentBase64,
     branch: params.branch,
   }
 
-  if (params.sha) body.sha = params.sha
+  if (params.sha) (body as Record<string, unknown>).sha = params.sha
 
   const res = await fetch(url, {
     method: "PUT",
@@ -69,6 +70,55 @@ async function githubPutFile(params: {
   }
 
   return res.json()
+}
+
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url)
+    const key = url.searchParams.get("key") as ContentKey | null
+
+    if (!key || !ALLOWED_KEYS.includes(key)) {
+      return NextResponse.json({ ok: false, error: `Invalid key '${key}'` }, { status: 400 })
+    }
+
+    const owner = process.env.GITHUB_OWNER
+    const repo = process.env.GITHUB_REPO
+    const branch = process.env.GITHUB_BRANCH ?? "main"
+
+    if (!owner || !repo) {
+      return NextResponse.json({ ok: false, error: "Missing repo config" }, { status: 500 })
+    }
+
+    // fetch file via GitHub Contents API (auth) and decode base64 to avoid CDN cache delays
+    const { owner: ghOwner, repo: ghRepo, branch: ghBranch, token } = getGithubConfig()
+    const contentsUrl = `https://api.github.com/repos/${ghOwner}/${ghRepo}/contents/data/content/${key}.json?ref=${ghBranch}`
+
+    const res = await fetch(contentsUrl, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    })
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "")
+      return NextResponse.json({ ok: false, error: `GitHub contents fetch failed ${res.status} ${txt}` }, { status: 502 })
+    }
+
+    const contentsJson = await res.json().catch(() => null)
+    if (!contentsJson || typeof contentsJson.content !== "string") {
+      return NextResponse.json({ ok: false, error: "Invalid contents response" }, { status: 502 })
+    }
+
+    const decoded = Buffer.from(contentsJson.content, contentsJson.encoding === "base64" ? "base64" : "utf8").toString("utf8")
+    const json = JSON.parse(decoded)
+
+    return NextResponse.json({ ok: true, data: json })
+  } catch (e: unknown) {
+    const errMsg = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ ok: false, error: errMsg || "Fetch failed" }, { status: 500 })
+  }
 }
 
 export async function POST(req: Request) {
@@ -103,7 +153,8 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json({ ok: true })
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message || "Save failed" }, { status: 500 })
+  } catch (e: unknown) {
+    const errMsg = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ ok: false, error: errMsg || "Save failed" }, { status: 500 })
   }
 }

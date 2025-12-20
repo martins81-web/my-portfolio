@@ -18,6 +18,7 @@ export type AboutProfile = {
   location: string
   email: string
   summary: string
+  avatarUrl?: string
 }
 
 type AboutJson = {

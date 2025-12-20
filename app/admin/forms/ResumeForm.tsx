@@ -24,40 +24,48 @@ export default function ResumeForm({ initial }: { initial: ResumeContent }) {
       await saveContent("resume", next)
       setForm(next)
       setMsg("Saved")
-    } catch (e: any) {
-      setMsg(e?.message || "Upload failed")
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : String(e)
+      setMsg(errMsg || "Upload failed")
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 900 }}>
-      <div style={{ opacity: 0.85 }}>{saving ? "Saving..." : msg}</div>
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm max-w-3xl">
+      <div className="mb-4 text-sm text-slate-600">{saving ? "Saving..." : msg}</div>
 
-      <div>
-        <div style={{ marginBottom: 8 }}>Current pdf</div>
+      <div className="mb-4">
+        <div className="mb-2 text-sm font-semibold">Current pdf</div>
         {form.resumeUrl ? (
-          <a href={form.resumeUrl} target="_blank" rel="noreferrer">
+          <a href={form.resumeUrl} target="_blank" rel="noreferrer" className="text-slate-900 underline">
             Open current resume pdf
           </a>
         ) : (
-          <div style={{ opacity: 0.8 }}>No resume uploaded</div>
+          <div className="opacity-80">No resume uploaded</div>
         )}
       </div>
 
-      <div>
-        <div style={{ marginBottom: 8 }}>Upload new pdf</div>
-        <input
-          type="file"
-          accept="application/pdf"
-          disabled={saving}
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) void onUpload(f)
-            e.currentTarget.value = ""
-          }}
-        />
+      <div className="mb-6">
+        <div className="mb-2 text-sm font-semibold">Upload new pdf</div>
+        <label className="inline-flex items-center gap-3">
+          <input
+            type="file"
+            accept="application/pdf"
+            disabled={saving}
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) void onUpload(f)
+              e.currentTarget.value = ""
+            }}
+          />
+
+          <span className={`rounded-xl px-4 py-2 text-sm font-semibold ${saving ? "bg-slate-200 text-slate-500" : "bg-slate-900 text-white hover:bg-slate-700"}`}>
+            Choose file
+          </span>
+        </label>
       </div>
 
       {form.resumeUrl ? <object data={form.resumeUrl} type="application/pdf" width="100%" height="700" /> : null}
