@@ -224,6 +224,13 @@ export default function AboutForm({ initial }: { initial: AboutContent }) {
       const currentUrl = form.aboutProfile?.avatarUrl
 
       const remoteTs = extractTs(latestUrl)
+      console.log("AboutForm: fetchLatestAbout comparison", { 
+        latestUrl, 
+        currentUrl, 
+        remoteTs, 
+        lastAvatarUpdate,
+        selectedFile: !!selectedFile 
+      })
       // If we have a local, newer timestamp (from a recent upload), do NOT overwrite with older remote data
       if (lastAvatarUpdate) {
         if (remoteTs && remoteTs < lastAvatarUpdate) {
@@ -240,7 +247,8 @@ export default function AboutForm({ initial }: { initial: AboutContent }) {
         // update form and avatarSrc immediately
         setFormState((f) => ({ ...f, aboutProfile: { ...f.aboutProfile, avatarUrl: latestUrl } }))
         const ts = Date.now()
-        const src = `${latestUrl}${latestUrl.includes("?") ? "&" : "?"}t=${ts}`
+        const cacheBust = Math.random().toString(36).substring(2)
+        const src = `${latestUrl}${latestUrl.includes("?") ? "&" : "?"}v=${cacheBust}`
         setAvatarPreviewSrc(src);
         try {
           window.localStorage.setItem("about.avatarUpdatedAt", String(ts))
@@ -296,25 +304,34 @@ export default function AboutForm({ initial }: { initial: AboutContent }) {
     setSaving(true)
     setMsg("")
     try {
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase()
+      console.log("AboutForm: uploading avatar", file.name)
       const out = await uploadAsset({
-        path: `data/assets/profile.${ext}`,
+        path: `data/assets/profile.jpg`,
         file,
         message: "Update profile picture",
       })
+      console.log("AboutForm: upload result", out)
 
+      // Remove query params from the saved URL - we'll add cache-busting on display
+      const baseUrl = out.url.split('?')[0]
+      console.log("AboutForm: baseUrl", baseUrl)
+      
       const next: AboutContent = {
         ...form,
-        aboutProfile: { ...form.aboutProfile, avatarUrl: out.url },
+        aboutProfile: { ...form.aboutProfile, avatarUrl: baseUrl },
       }
 
+      console.log("AboutForm: saving content with avatarUrl", baseUrl)
       await saveContent("about", next)
 
       // immediately update local preview and form so the admin reflects the change
       const ts = Date.now()
-      const src = `${out.url}${out.url.includes("?") ? "&" : "?"}t=${ts}`
-      setAvatarPreviewSrc(src);
+      const cacheBust = Math.random().toString(36).substring(2)
+      const src = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}v=${cacheBust}`
+      console.log("AboutForm: setting preview src", src)
+      setAvatarPreviewSrc(src)
       setFormState(() => next)
+      setAvatarVersion(ts)
       try { window.localStorage.setItem("about.avatarUpdatedAt", String(ts)) } catch (e) { /* ignore */ }
       try { window.localStorage.setItem("about.avatarPreviewUrl", src) } catch (e) { /* ignore */ }
       setLastAvatarUpdate(ts)
@@ -328,7 +345,7 @@ export default function AboutForm({ initial }: { initial: AboutContent }) {
         try {
           const res = await fetch("/api/admin/content?key=about", { cache: "no-store" })
           const json = await res.json().catch(() => null)
-          if (json?.ok && json?.data?.aboutProfile?.avatarUrl && json.data.aboutProfile.avatarUrl.includes(out.url.split("?")[0])) {
+          if (json?.ok && json?.data?.aboutProfile?.avatarUrl === baseUrl) {
             ok = true
             break
           }
@@ -351,9 +368,10 @@ export default function AboutForm({ initial }: { initial: AboutContent }) {
             try {
               const res = await fetch("/api/admin/content?key=about", { cache: "no-store" })
               const json = await res.json().catch(() => null)
-              if (json?.ok && json?.data?.aboutProfile?.avatarUrl && json.data.aboutProfile.avatarUrl.includes(out.url.split("?")[0])) {
+              if (json?.ok && json?.data?.aboutProfile?.avatarUrl === baseUrl) {
                 const ts2 = Date.now()
-                const src2 = `${out.url}${out.url.includes("?") ? "&" : "?"}t=${ts2}`
+                const cacheBust2 = Math.random().toString(36).substring(2)
+                const src2 = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}v=${cacheBust2}`
                 setAvatarPreviewSrc(src2);
                 try { window.localStorage.setItem("about.avatarPreviewUrl", src2) } catch (e) { /* ignore */ }
                 try { window.localStorage.setItem("about.avatarUpdatedAt", String(ts2)) } catch (e) { /* ignore */ }
@@ -553,10 +571,27 @@ export default function AboutForm({ initial }: { initial: AboutContent }) {
                           className="rounded-xl px-3 py-2 text-sm font-semibold bg-slate-900 text-white hover:bg-slate-700"
                           onClick={async () => {
                             if (!selectedFile) return
+                            
+                            // Convert to data URL for localStorage persistence
+                            const reader = new FileReader()
+                            const dataUrlPromise = new Promise<string>((resolve) => {
+                              reader.onloadend = () => resolve(reader.result as string)
+                              reader.readAsDataURL(selectedFile)
+                            })
+                            
                             const ok = await onUploadAvatar(selectedFile)
                             if (ok) {
-                              if (previewUrl) URL.revokeObjectURL(previewUrl)
+                              const dataUrl = await dataUrlPromise
+                              // Store data URL so it persists across navigation
+                              try {
+                                window.localStorage.setItem("about.avatarPreviewUrl", dataUrl)
+                              } catch (e) {
+                                // ignore if too large
+                              }
+                              setAvatarPreviewSrc(dataUrl)
+                              setMsg("Saved - image will update across site on next page load")
                               setSelectedFile(null)
+                              if (previewUrl) URL.revokeObjectURL(previewUrl)
                               setPreviewUrl(null)
                             }
                           }}
@@ -594,6 +629,7 @@ export default function AboutForm({ initial }: { initial: AboutContent }) {
                     />
                   ) : avatarPreviewSrc ? (
                     <Image
+                      key={avatarPreviewSrc}
                       src={avatarPreviewSrc}
                       alt="Profile"
                       width={224}
@@ -603,7 +639,8 @@ export default function AboutForm({ initial }: { initial: AboutContent }) {
                     />
                   ) : form.aboutProfile.avatarUrl ? (
                     <Image
-                      src={`${form.aboutProfile.avatarUrl}${form.aboutProfile.avatarUrl.includes('?') ? '&' : '?'}v=${avatarVersion}`}
+                      key={`${form.aboutProfile.avatarUrl}-${avatarVersion}`}
+                      src={`/api/avatar?url=${encodeURIComponent(form.aboutProfile.avatarUrl)}&v=${Math.random().toString(36).slice(2)}`}
                       alt="Profile"
                       width={224}
                       height={224}

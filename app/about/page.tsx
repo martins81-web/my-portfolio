@@ -83,7 +83,7 @@ export default async function AboutPage() {
             <div className="relative h-[360px] sm:h-[420px]">
               {aboutProfile?.avatarUrl ? (
                 <Image
-                  src={`${aboutProfile.avatarUrl}${aboutProfile.avatarUrl.includes("?") ? "&" : "?"}t=${Date.now()}`}
+                  src={`/api/avatar?url=${encodeURIComponent(aboutProfile.avatarUrl)}&v=${Math.random().toString(36).slice(2)}`}
                   alt="Eric Martins"
                   fill
                   sizes="(max-width: 1024px) 320px, 320px"
